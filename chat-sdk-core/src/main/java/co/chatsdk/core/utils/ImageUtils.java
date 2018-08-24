@@ -51,6 +51,9 @@ public class ImageUtils {
                         !isExternalStorageRemovable() ? context.getExternalCacheDir().getPath() :
                         context.getCacheDir().getPath();
 
+        if (uniqueName == null || uniqueName.isEmpty()) {
+            uniqueName = "ChatSDK";
+        }
         return new File(cachePath + File.separator + uniqueName);
     }
 
