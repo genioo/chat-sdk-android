@@ -90,8 +90,10 @@ public class ChatSDK {
         else {
             shared().activateModule("FirebaseModule", "activate");
         }
+        
+        // #213 Remove notifications on start.
+        // shared().handleLocalNotifications();
 
-        shared().handleLocalNotifications();
         // Monitor the app so if it goes into the background we know
         AppBackgroundMonitor.shared().setEnabled(true);
 
