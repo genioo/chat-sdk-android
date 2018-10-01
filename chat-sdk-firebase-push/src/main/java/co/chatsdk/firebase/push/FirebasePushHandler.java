@@ -147,7 +147,11 @@ public class FirebasePushHandler implements PushHandler {
             HashMap<String, Object> params = new HashMap<>();
 
             params.put("to", channel);
-            params.put("notification", notification);
+
+            // #213 Pass notification info through data (to avoid the system tray automatic push) ->
+            // SEE https://firebase.google.com/docs/cloud-messaging/android/receive?hl=en
+            data.putAll(notification);
+
             params.put("data", data);
 //            params.put("priority", "high");
             params.put("sound", ChatSDK.config().pushNotificationSound);
