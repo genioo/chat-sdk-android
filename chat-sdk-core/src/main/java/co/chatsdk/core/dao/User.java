@@ -424,11 +424,16 @@ public class User implements CoreEntity, UserListItem {
         return data != null;
     }
 
-    public String getPushChannel(){
-        if (entityID == null)
-            return "";
-
-        return USER_PREFIX + (entityID.replace(":","_"));
+    public String getPushChannel() {
+        // Make the push channel safe
+        String channel = entityID;
+        channel = channel.replace(".", "1");
+        channel = channel.replace("%2E", "1");
+        channel = channel.replace("@", "2");
+        channel = channel.replace("%40", "2");
+        channel = channel.replace(":", "3");
+        channel = channel.replace("%3A", "3");
+        return channel;
     }
 
     public boolean isMe(){

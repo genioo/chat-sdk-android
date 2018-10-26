@@ -25,6 +25,7 @@ public class Keys {
     public static final String UserFirebaseId = "user-firebase-id";
     public static final String Color = "color";
     public static final String Name = "name";
+    public static final String NameLowercase = "name-lowercase";
     public static final String Null = "null";
     public static final String InvitedBy = "invitedBy";
     public static final String CreationDate = "creation-date";
@@ -60,6 +61,8 @@ public class Keys {
     public static final String MessageAudioURL = "audio-url";
     public static final String MessageAudioLength = "audio-length";
     public static final String MessageStickerName = "sticker";
+    public static final String MessageMimeType = "mime-type";
+    public static final String MessageFileURL = "file-url";
 
     // CoreUser details
     public static final String Gender = "gender";
@@ -67,6 +70,5 @@ public class Keys {
     public static final String Location = "location";
     public static final String DateOfBirth = "date-of-birth";
     public static final String Status = "status";
-    public static final String PushToken = "pushToken";
 
 }

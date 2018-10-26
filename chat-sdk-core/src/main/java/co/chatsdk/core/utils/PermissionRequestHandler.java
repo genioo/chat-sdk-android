@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.pm.PackageManager;
-import android.support.annotation.StringRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
@@ -38,6 +37,7 @@ public class PermissionRequestHandler {
     private static int RECORD_VIDEO_REQUEST = 103;
     private static int CAMERA_REQUEST = 104;
     private static int READ_CONTACTS_REQUEST = 105;
+    private static int MANAGE_DOCUMENTS_REQUEST = 106;
 
 //    HashMap<Integer, Boolean> requested = new HashMap<>();
 
@@ -51,6 +51,10 @@ public class PermissionRequestHandler {
 
     public Completable requestWriteExternalStorage (Activity activity) {
         return requestPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE_REQUEST, R.string.permission_write_external_storage_title, R.string.permission_write_external_storage_message);
+    }
+
+    public Completable requestManageDocumentsStorage (Activity activity) {
+        return requestPermission(activity, Manifest.permission.MANAGE_DOCUMENTS, MANAGE_DOCUMENTS_REQUEST, R.string.permission_manage_documents_storage_title, R.string.permission_manage_documents_message);
     }
 
     public Completable requestReadExternalStorage (Activity activity) {
@@ -70,7 +74,7 @@ public class PermissionRequestHandler {
         return requestPermission(activity, Manifest.permission.READ_CONTACTS, READ_CONTACTS_REQUEST, R.string.permission_read_contacts_title, R.string.permission_read_contacts_message);
     }
 
-    public Completable requestPermission (final Activity activity, final String permission, final int result, @StringRes final int dialogTitle, @StringRes final int dialogMessage) {
+    public Completable requestPermission (final Activity activity, final String permission, final int result, final int dialogTitle, final int dialogMessage) {
         if(completableMap.containsKey(result)) {
             return Completable.complete();
         }

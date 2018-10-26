@@ -117,6 +117,10 @@ public class FirebaseThreadHandler extends AbstractThreadHandler {
         return new ThreadWrapper(thread).push();
     }
 
+    public Completable pushThreadMeta(Thread thread) {
+        return new ThreadWrapper(thread).pushMeta();
+    }
+
     /** Send a message,
      *  The message need to have a owner thread attached to it or it cant be added.
      *  If the destination thread is public the system will add the user to the message thread if needed.
@@ -169,6 +173,7 @@ public class FirebaseThreadHandler extends AbstractThreadHandler {
             if(!users.contains(currentUser)) {
                 users.add(currentUser);
             }
+
 
             if(users.size() == 2 && (type == -1 || type == ThreadType.Private1to1)) {
 
@@ -250,7 +255,7 @@ public class FirebaseThreadHandler extends AbstractThreadHandler {
         }
 
         if (message.getThread().typeIs(ThreadType.Private)) {
-            ChatSDK.push().pushToUsers(message.getThread().getUsers(), message);
+            ChatSDK.push().pushForMessage(message);
         }
     }
 

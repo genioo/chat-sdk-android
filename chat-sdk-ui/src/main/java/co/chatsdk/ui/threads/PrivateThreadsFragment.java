@@ -7,7 +7,6 @@
 
 package co.chatsdk.ui.threads;
 
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 
 import java.util.List;
@@ -30,10 +29,10 @@ import io.reactivex.functions.Predicate;
 public class PrivateThreadsFragment extends ThreadsFragment {
 
     @Override
-    public void initViews (LayoutInflater inflater) {
-        super.initViews(inflater);
+    public void initViews() {
+        super.initViews();
 
-        adapter.onClickObservable().subscribe(thread -> ChatSDK.ui().startChatActivityForID(getContext(), thread.getEntityID()));
+//        adapter.onClickObservable().subscribe(thread -> ChatSDK.ui().startChatActivityForID(getContext(), thread.getEntityID()));
 
         adapter.onLongClickObservable().subscribe(thread -> DialogUtils.showToastDialog(getContext(), "", getResources().getString(R.string.alert_delete_thread), getResources().getString(R.string.delete),
                 getResources().getString(R.string.cancel), null, () -> {

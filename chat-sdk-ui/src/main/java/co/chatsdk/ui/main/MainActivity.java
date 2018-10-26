@@ -10,6 +10,7 @@ package co.chatsdk.ui.main;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
@@ -34,7 +35,7 @@ public class MainActivity extends BaseActivity {
     protected ViewPager viewPager;
     protected PagerAdapterTabs adapter;
 
-    protected DisposableList disposables = new DisposableList();
+    protected DisposableList disposableList = new DisposableList();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +48,11 @@ public class MainActivity extends BaseActivity {
             return;
         }
 
-        setContentView(R.layout.chat_sdk_activity_view_pager);
+        setContentView(activityLayout());
 
         initViews();
-        launchFromPush(getIntent().getExtras());
 
+        launchFromPush(getIntent().getExtras());
     }
 
     public void launchFromPush (Bundle bundle) {
@@ -67,9 +68,9 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
 
-        disposables.dispose();
+        disposableList.dispose();
 
-        disposables.add(ChatSDK.events().sourceOnMain()
+        disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(NetworkEvent.filterType(EventType.Logout))
                 .subscribe(networkEvent -> clearData()));
 
@@ -81,7 +82,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onPause () {
         super.onPause();
-        disposables.dispose();
+        disposableList.dispose();
     }
 
     @Override
@@ -97,8 +98,11 @@ public class MainActivity extends BaseActivity {
         super.onSaveInstanceState(outState);
     }
 
-    protected void initViews() {
+    protected @LayoutRes int activityLayout() {
+        return R.layout.chat_sdk_activity_view_pager;
+    }
 
+    protected void initViews() {
         viewPager = findViewById(R.id.pager);
 
         tabLayout = findViewById(R.id.tab_layout);

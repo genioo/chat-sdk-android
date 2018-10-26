@@ -9,7 +9,8 @@ Chat SDK is a fully featured open source instant messaging framework for Android
 - **Open Source.** The Chat SDK is open source
 - **Full control of the data.** You have full and exclusive access to the user's chat data
 - **Quick integration.** Chat SDK is fully featured out of the box
-- Install the demo **[Firebase](https://i.diawi.com/VKRnbm)** or **[XMPP](https://i.diawi.com/yFyY9U)** app now by clicking the link on your Android phone! 
+<!--- Install the demo **[Firebase](https://i.diawi.com/2JGr4o)** app now by clicking the link on your Android phone! -->
+- **Demo Versions.** **[Firebase](https://i.diawi.com/VKRnbm)** or **[XMPP](https://i.diawi.com/GLCG8S)** open this link on your Android phone to install
 - **Scalable.** Supports millons of daily users [[1](https://firebase.google.com/docs/database/usage/limits), [2](https://blog.process-one.net/ejabberd-massive-scalability-1node-2-million-concurrent-users/)]
 - **Backend agnostic.** Chat SDK can be customized to [support any backend](https://github.com/chat-sdk/chat-sdk-android#backend-agnostic-architecture) 
 
@@ -41,16 +42,20 @@ Chat SDK is a fully featured open source instant messaging framework for Android
 
 The Chat SDK has a number of additional modules that can easily be installed including:
 
-- [Typing indicator](http://chatsdk.co/downloads/typing-indicator/)
-- [Read receipts](http://chatsdk.co/downloads/read-receipts/)
-- [Location based chat](http://chatsdk.co/downloads/location-based-chat/)
-- [Audio messages](http://chatsdk.co/downloads/audio-messages/)
-- [Video messages](http://chatsdk.co/downloads/video-messages/)
-- [Sticker messages](https://chatsdk.co/downloads/sticker-messages/)
-- [Contact book integration](https://chatsdk.co/downloads/contact-book-integration/)
-- [Social Login](https://github.com/chat-sdk/chat-sdk-android#social-login)
-- [Push Notifications](https://github.com/chat-sdk/chat-sdk-android#push-notifications)
-- [File Storage](https://github.com/chat-sdk/chat-sdk-android/tree/master/chat-sdk-firebase-file-storage) (Included in basic setup instructions)
+- [File Messages](http://chatsdk.co/file-messages/)
+- [Typing indicator](http://chatsdk.co/typing-indicator/)
+- [Read receipts](http://chatsdk.co/read-receipts/)
+- [Location based chat](http://chatsdk.co/location-based-chat/)
+- [Audio messages](http://chatsdk.co/audio-messages/)
+- [Video messages](http://chatsdk.co/video-messages/)
+- [Sticker messages](https://chatsdk.co/sticker-messages/)
+- [Contact book integration](https://chatsdk.co/contact-book-integration/)
+- [User Blocking](http://chatsdk.co/user-blocking/)
+- [Social Login (free)](https://github.com/chat-sdk/chat-sdk-android#social-login)
+- [Push Notifications (free)](https://github.com/chat-sdk/chat-sdk-android#push-notifications)
+- [File Storage (free)](https://github.com/chat-sdk/chat-sdk-android/tree/master/chat-sdk-firebase-file-storage) (Included in basic setup instructions)
+- [Firebase UI (free)](https://github.com/chat-sdk/chat-sdk-android/tree/master/chat-sdk-firebase-ui) (Included in basic setup instructions)
+
  
 ## Firebase Firestore
 
@@ -130,10 +135,10 @@ repositories {
 Then add this to your `dependencies` area:
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-core:4.1.26'
-compile 'co.chatsdk.chatsdk:chat-sdk-ui:4.1.26'
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-adapter:4.1.26'
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-file-storage:4.1.26'
+compile 'co.chatsdk.chatsdk:chat-sdk-core:4.3.3'
+compile 'co.chatsdk.chatsdk:chat-sdk-ui:4.3.3'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-adapter:4.3.3'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-file-storage:4.3.3'
 ```
 
 You may also need to enable Java 8:
@@ -192,7 +197,7 @@ try {
 
 // File storage is needed for profile image upload and image messages
 FirebaseFileStorageModule.activate();
-FirebasePushModule.activateForFirebase();
+FirebasePushModule.activate();
 
 // Activate any other modules you need.
 // ...
@@ -325,7 +330,7 @@ Add the following to your `build.gradle`
 *Gradle*
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-push:4.1.26'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-push:4.3.3'
 ```
 
 [*Manual Import*](https://github.com/chat-sdk/chat-sdk-android#adding-modules-manually)
@@ -339,15 +344,27 @@ compile project(path: ':chat-sdk-firebase-push')
 In your main class `onCreate` method add:
 
 ```
-FirebasePushModule.activateForFirebase();
+FirebasePushModule.activate();
 ```
 
-3. Get the push token. Go to the [Firebase Console](https://console.firebase.google.com) click **your project** and then the **Settings** button. Click the **Cloud Messaging** tab. Copy the **Server Key**.
-4. Add the following to the setup code in the apps' main `onCreate` method.
+##### Setup Firebase Cloud Functions
 
-   ```
-   builder.firebaseCloudMessagingServerKey("YOUR FIREBASE CLOUD MESSAGING KEY");
-   ```
+To handle push notifications, we use [Firebase Cloud Functions](https://firebase.google.com/docs/functions/). This service allows you to upload a script to Firebase hosting. This script monitors the realtime database and whenever a new messsage is detected, it sends a push notification to the recipient. 
+
+Below is a summary of the steps that are required to setup push using the Firebase Cloud Functions script. For further instructions you can look at the [Firebase Documentation](https://firebase.google.com/docs/functions/get-started). 
+
+1. Run `firebase login` and login using the browser
+2. Make a new directory to store your push functions in. It can be called anything
+3. Navigate to that directory using the terminal
+4. Run `firebase init functions`
+5. Choose the correct app from the list
+6. Choose `JavaScript`
+7. Choose `y` for ESLint
+8. Choose `Y` to install node dependencies
+9. Find the `functions` directory you've just created and copy the `index.js` file from [Github](https://github.com/chat-sdk/chat-sdk-android/tree/master/FirebasePushNotifications) into the directory
+10. Run `firebase deploy` 
+
+Now the script is active and push notifications will be set out automatically. 
 
 ### Firebase UI
 
@@ -356,7 +373,7 @@ FirebasePushModule.activateForFirebase();
 Add the following to your `build.gradle`
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-ui:4.1.26'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-ui:4.3.3'
 ```
 
 ##### Enable the module
@@ -400,7 +417,7 @@ Add the following to your `build.gradle`
 *Gradle*
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-social-login:4.1.26'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-social-login:4.3.3'
 ```
 
 [*Manual Import*](https://github.com/chat-sdk/chat-sdk-android#adding-modules-manually)
@@ -524,15 +541,9 @@ After you have purchased the module you will be provided with a link to the modu
 4. In your main class `onCreate` activate the module:
 
   ```
-  ContactBookModule.activateForFirebase();
+  ContactBookModule.activate();
   ```
   
-  or 
-
-  ```
-  ContactBookModule.activateForXMPP();
-  ```
-
 ### Security Rules
 
 Firebase secures your data by allowing you to write rules to govern who can access the database and what can be written. On the Firebase dashboard click **Database** then the **Rules** tab. 

@@ -274,6 +274,7 @@ public class UserWrapper {
         // Don't push availability to Firebase
         HashMap<String, String> metaMap = new HashMap<>(model.metaMap());
         metaMap.remove(Keys.Availability);
+        metaMap.put(Keys.NameLowercase, model.getName() != null ? model.getName().toLowerCase() : "");
 
         values.put(Keys.Meta, metaMap);
         values.put(Keys.LastOnline, ServerValue.TIMESTAMP);
@@ -335,16 +336,6 @@ public class UserWrapper {
         return ref().child(FirebasePaths.MetaPath);
     }
 
-    public String pushChannel(){
-        String channel = USER_PREFIX + (model.getEntityID().replace(":", "_"));
-        
-        if (channel.contains("%3A"))
-            channel = channel.replace("%3A", "_");
-        if (channel.contains("%253A"))
-            channel = channel.replace("%253A", "_");
-        
-        return channel;
-    }
 
     public Completable updateIndex() {
         return Completable.create(e -> {

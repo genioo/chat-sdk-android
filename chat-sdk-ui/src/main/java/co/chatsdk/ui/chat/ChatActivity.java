@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -130,6 +131,8 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(activityLayout());
+
         initViews();
 
         if (!updateThreadFromBundle(savedInstanceState)) {
@@ -213,10 +216,11 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         }
     }
 
+    protected @LayoutRes int activityLayout() {
+        return R.layout.chat_sdk_activity_chat;
+    }
+
     protected void initViews () {
-
-        setContentView(R.layout.chat_sdk_activity_chat);
-
         // Set up the message box - this is the box that sits above the keyboard
         textInputView = findViewById(R.id.chat_sdk_message_box);
         textInputView.setDelegate(this);
@@ -307,9 +311,11 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
                     @Override
                     public void onNext(@NonNull MessageSendProgress messageSendProgress) {
-                        Timber.v("Message Status: " + messageSendProgress.getStatus());
-                        if(messageListAdapter.addRow(messageSendProgress.message, true, true)) {
-                            messageListAdapter.notifyDataSetChanged();
+                        Timber.d("Message Status: " + messageSendProgress.getStatus());
+                        // It's best not to sort here because then we are just adding the message
+                        // to the bottom of the list. We only sort after the message has also been
+                        // received from Firebase so the datestamp is also correct
+                        if(messageListAdapter.addRow(messageSendProgress.message, false, true, messageSendProgress.uploadProgress)) {
                             scrollListTo(ListPosition.Bottom, false);
                         }
                     }
@@ -367,9 +373,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                     message.setRead(true);
                     message.update();
 
-                    boolean isAdded = messageListAdapter.addRow(message);
-                    if(!isAdded) {
-                        messageListAdapter.notifyDataSetChanged();
+                    boolean isAdded = messageListAdapter.addRow(message, false, false);
+                    if(isAdded || message.getMessageStatus() == MessageSendStatus.None) {
+                        messageListAdapter.sortAndNotify();
                     }
 
                     // Check if the message from the current user, If so return so we wont vibrate for the user messages.
@@ -408,11 +414,12 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(NetworkEvent.filterType(EventType.TypingStateChanged)).subscribe(networkEvent -> {
                     if(networkEvent.thread.equals(thread)) {
-                        if(networkEvent.text != null) {
-                            networkEvent.text += getString(R.string.typing);
+                        String typingText = networkEvent.text;
+                        if(typingText != null) {
+                            typingText += getString(R.string.typing);
                         }
-                        Timber.v(networkEvent.text);
-                        setSubtitleText(networkEvent.text);
+                        Timber.v(typingText);
+                        setSubtitleText(typingText);
                     }
                 }));
     }
@@ -782,7 +789,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             progressBar.setVisibility(View.INVISIBLE);
         }
 
-        ChatSDK.thread().loadMoreMessagesForThread(null, thread)
+        Disposable d = ChatSDK.thread().loadMoreMessagesForThread(null, thread)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((messages, throwable) -> {
                     progressBar.setVisibility(View.INVISIBLE);

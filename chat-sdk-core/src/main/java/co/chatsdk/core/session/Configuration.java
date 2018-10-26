@@ -56,6 +56,7 @@ public class Configuration {
     public boolean xmppAllowClientSideAuthentication;
     public boolean xmppCompressionEnabled;
     public String xmppSecurityMode = "disabled";
+    public int xmppMucMessageHistory = 20;
 
     // Push notification
     public int pushNotificationImageDefaultResourceId;
@@ -64,7 +65,7 @@ public class Configuration {
     public boolean inboundPushHandlingEnabled = true;
 
     // Should the client send the push or is a server script handling it?
-    public boolean clientPushEnabled = true;
+    public boolean clientPushEnabled = false;
 
     // If this is true, then we will only send a push notification if the recipient is offline
     public boolean onlySendPushToOfflineUsers = false;
@@ -122,6 +123,7 @@ public class Configuration {
     public String pushNotificationSound = "";
     public boolean showLocalNotifications = true;
     public int pushNotificationColor = Color.parseColor("#ff33b5e5");
+    public boolean pushNotificationsForPublicChatRoomsEnabled;
 
     // If this is set to true, we will simulate what happens when a push is recieved and the app
     // is in the killed state. This is useful to help us debug that process.
@@ -254,7 +256,7 @@ public class Configuration {
             return this;
         }
 
-        public Builder xmppAcceptAllCertificates (boolean acceptAllCertificates) {
+        public Builder setXxmppAcceptAllCertificates (boolean acceptAllCertificates) {
             config.xmppAcceptAllCertificates = acceptAllCertificates;
             return this;
         }
@@ -264,12 +266,17 @@ public class Configuration {
             return this;
         }
 
-        public Builder xmppSslEnabled (boolean sslEnabled) {
+        public Builder setXmppSslEnabled (boolean sslEnabled) {
             config.xmppSslEnabled = sslEnabled;
             return this;
         }
 
-        public Builder xmppDisableHostNameVerification (boolean disableHostNameVerification) {
+        public Builder setXmppMucMessageHistory (int history) {
+            config.xmppMucMessageHistory = history;
+            return this;
+        }
+
+        public Builder setXmppDisableHostNameVerification (boolean disableHostNameVerification) {
             config.xmppDisableHostNameVerification = disableHostNameVerification;
             return this;
         }
@@ -279,12 +286,12 @@ public class Configuration {
          * @param allowClientSideAuthentication
          * @return
          */
-        public Builder xmppAllowClientSideAuthentication (boolean allowClientSideAuthentication) {
+        public Builder setXmppAllowClientSideAuthentication (boolean allowClientSideAuthentication) {
             config.xmppAllowClientSideAuthentication = allowClientSideAuthentication;
             return this;
         }
 
-        public Builder xmppCompressionEnabled (boolean compressionEnabled) {
+        public Builder setXmppCompressionEnabled (boolean compressionEnabled) {
             config.xmppCompressionEnabled = compressionEnabled;
             return this;
         }
@@ -297,7 +304,7 @@ public class Configuration {
          * @param securityMode
          * @return
          */
-        public Builder xmppSecurityMode (String securityMode) {
+        public Builder setXmppSecurityMode (String securityMode) {
             config.xmppSecurityMode = securityMode;
             return this;
         }
@@ -334,8 +341,18 @@ public class Configuration {
             return this;
         }
 
+        public Builder setShowEmptyChats (boolean showEmpty) {
+            config.showEmptyChats = showEmpty;
+            return this;
+        }
+
         public Builder setInboundPushHandlingEnabled (boolean enabled) {
             config.inboundPushHandlingEnabled = enabled;
+            return this;
+        }
+
+        public Builder pushNotificationsForPublicChatRoomsEnabled(boolean value) {
+            config.pushNotificationsForPublicChatRoomsEnabled = value;
             return this;
         }
 

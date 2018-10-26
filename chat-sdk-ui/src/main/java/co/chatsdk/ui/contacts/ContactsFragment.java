@@ -9,6 +9,7 @@ package co.chatsdk.ui.contacts;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -74,6 +75,8 @@ public class ContactsFragment extends BaseFragment {
     protected UsersListAdapter adapter;
     protected ProgressBar progressBar;
     protected RecyclerView recyclerView;
+
+    private boolean showProfileActivityTransitionStarted = false;
 
     protected Disposable listOnClickListenerDisposable;
 
@@ -146,6 +149,7 @@ public class ContactsFragment extends BaseFragment {
         f.setExtraData(threadID);
         Bundle b = new Bundle();
         f.setArguments(b);
+
         return f;
     }
 
@@ -206,7 +210,7 @@ public class ContactsFragment extends BaseFragment {
             }
         }
 
-        mainView = inflater.inflate(R.layout.chat_sdk_fragment_contacts, null);
+        mainView = inflater.inflate(activityLayout(), null);
 
         initViews();
 
@@ -220,6 +224,10 @@ public class ContactsFragment extends BaseFragment {
         super.onSaveInstanceState(outState);
         outState.putInt(LOADING_MODE, loadingMode);
         outState.putBoolean(IS_DIALOG, isDialog);
+    }
+
+    protected @LayoutRes int activityLayout() {
+        return R.layout.chat_sdk_fragment_contacts;
     }
 
     public void initViews() {
@@ -320,8 +328,12 @@ public class ContactsFragment extends BaseFragment {
                         }
                         break;
                     case CLICK_MODE_SHOW_PROFILE:
-                    default:
-                        ChatSDK.ui().startProfileActivity(getContext(), clickedUser.getEntityID());
+                    default: {
+                        if (!showProfileActivityTransitionStarted) {
+                            ChatSDK.ui().startProfileActivity(getContext(), clickedUser.getEntityID());
+                            showProfileActivityTransitionStarted = true;
+                        }
+                    }
                 }
             }
         });
@@ -365,6 +377,7 @@ public class ContactsFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
+        showProfileActivityTransitionStarted = false;
         loadData(true);
     }
 
