@@ -107,7 +107,7 @@ public class FirebasePushHandler implements PushHandler {
 
         for(User user : users) {
             String pushToken = user.metaStringForKey(Keys.PushToken);
-            if(!user.isMe() && !StringChecker.isNullOrEmpty(pushToken) && (!user.getIsOnline() || !ChatSDK.config().onlySendPushToOfflineUsers)) {
+            if(!user.isMe() && !StringChecker.isNullOrEmpty(pushToken) && (!isUserOnline(user) || !ChatSDK.config().onlySendPushToOfflineUsers)) {
                 channels.add(pushToken);
             }
         }
@@ -128,6 +128,10 @@ public class FirebasePushHandler implements PushHandler {
         data.put(InterfaceManager.USER_ENTITY_ID, message.getSender().getEntityID());
 
         pushToChannels(channels, notification, data);
+    }
+
+    private boolean isUserOnline(User user){
+        return user != null && user.getAvailability() != null && user.getIsOnline();
     }
 
     private Completable pushToChannel (final String channel, final Map<String, String> notification, final Map<String, String> data) {
