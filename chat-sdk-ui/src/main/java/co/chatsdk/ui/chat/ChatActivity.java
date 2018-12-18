@@ -770,25 +770,25 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
     public void loadMessages(final boolean showLoadingIndicator, final int amountToLoad, final ListPosition toPosition) {
 
-        if (showLoadingIndicator) {
-            recyclerView.setVisibility(View.INVISIBLE);
-            progressBar.setVisibility(View.VISIBLE);
-        }
-        else {
+//        if (showLoadingIndicator) {
+//            recyclerView.setVisibility(View.INVISIBLE);
+//            progressBar.setVisibility(View.VISIBLE);
+//        }
+//        else {
             progressBar.setVisibility(View.INVISIBLE);
-        }
+//        }
 
         Disposable d = ChatSDK.thread().loadMoreMessagesForThread(null, thread)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((messages, throwable) -> {
-                    progressBar.setVisibility(View.INVISIBLE);
+//                    progressBar.setVisibility(View.INVISIBLE);
 
                     messageListAdapter.setMessages(messages);
 
                     if (showLoadingIndicator) {
                         //animateListView();
                     }
-                    recyclerView.setVisibility(View.VISIBLE);
+//                    recyclerView.setVisibility(View.VISIBLE);
 
                     scrollListTo(toPosition, !showLoadingIndicator);
                 });
