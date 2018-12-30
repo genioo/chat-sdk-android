@@ -783,7 +783,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                 .subscribe((messages, throwable) -> {
 //                    progressBar.setVisibility(View.INVISIBLE);
 
-                    messageListAdapter.setMessages(messages);
+                    if(!messages.isEmpty()){
+                        messageListAdapter.setMessages(messages);
+                    }
 
                     if (showLoadingIndicator) {
                         //animateListView();
