@@ -783,9 +783,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                 .subscribe((messages, throwable) -> {
 //                    progressBar.setVisibility(View.INVISIBLE);
 
-                    if(!messages.isEmpty()){
-                        messageListAdapter.setMessages(messages);
-                    }
+                    loadMessages(messages);
 
                     if (showLoadingIndicator) {
                         //animateListView();
@@ -794,6 +792,12 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
                     scrollListTo(toPosition, !showLoadingIndicator);
                 });
+    }
+
+    protected void loadMessages(List<Message> messages) {
+        if(!messages.isEmpty()){
+            messageListAdapter.setMessages(messages);
+        }
     }
 
     public void markAsDelivered(List<Message> messages){
