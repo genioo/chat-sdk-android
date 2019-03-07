@@ -12,11 +12,12 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.appcompat.app.ActionBar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +51,7 @@ import co.chatsdk.core.session.StorageManager;
 import co.chatsdk.core.types.ChatOptionType;
 import co.chatsdk.core.types.MessageSendProgress;
 import co.chatsdk.core.types.MessageSendStatus;
+import co.chatsdk.core.types.ReadStatus;
 import co.chatsdk.core.utils.ActivityResult;
 import co.chatsdk.core.utils.CrashReportingCompletableObserver;
 import co.chatsdk.core.utils.CrashReportingObserver;
@@ -103,7 +105,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
     protected TextInputView textInputView;
     protected RecyclerView recyclerView;
-    protected MessagesListAdapter messageListAdapter;
+    protected MessageListAdapter messageListAdapter;
     protected Thread thread;
     protected TextView subtitleTextView;
 
@@ -129,6 +131,8 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(activityLayout());
 
         initViews();
 
@@ -213,10 +217,11 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         }
     }
 
+    protected @LayoutRes int activityLayout() {
+        return R.layout.chat_sdk_activity_chat;
+    }
+
     protected void initViews () {
-
-        setContentView(R.layout.chat_sdk_activity_chat);
-
         // Set up the message box - this is the box that sits above the keyboard
         textInputView = findViewById(R.id.chat_sdk_message_box);
         textInputView.setDelegate(this);
@@ -264,7 +269,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         });
 
         if (messageListAdapter == null) {
-            messageListAdapter = new MessagesListAdapter(ChatActivity.this);
+            messageListAdapter = new MessageListAdapter(ChatActivity.this);
         }
 
         recyclerView.setAdapter(messageListAdapter);
@@ -393,6 +398,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
                     boolean isAdded = messageListAdapter.addRow(message, false, false);
                     if(isAdded || message.getMessageStatus() == MessageSendStatus.None) {
+                        messageListAdapter.sortAndNotify();
+                        // Make sure to update for read receipts if necessary
+                    } else if (ChatSDK.readReceipts() != null && message.getSender().isMe() && message.getReadStatus() != ReadStatus.read()) {
                         messageListAdapter.sortAndNotify();
                     }
 
@@ -568,7 +576,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             return super.onCreateOptionsMenu(menu);
 
         // Adding the add user option only if group chat is enabled.
-        if (ChatSDK.config().groupsEnabled && thread.typeIs(ThreadType.Group)) {
+        if (ChatSDK.config().groupsEnabled && thread.typeIs(ThreadType.Private)) {
             MenuItem item = menu.add(Menu.NONE, R.id.action_chat_sdk_add, 10, getString(R.string.chat_activity_show_users_item_text));
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
             item.setIcon(R.drawable.ic_plus);
@@ -870,7 +878,5 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             option.execute(this, thread).subscribe(new CrashReportingObserver<>());
         }
     }
-
-
 
 }

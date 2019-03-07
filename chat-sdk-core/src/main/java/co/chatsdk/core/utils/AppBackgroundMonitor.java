@@ -1,12 +1,13 @@
 package co.chatsdk.core.utils;
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.ProcessLifecycleOwner;
+import java.util.ArrayList;
+
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ProcessLifecycleOwner;
 
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.session.NM;
 
 /**
  * Created by ben on 9/27/17.
@@ -18,6 +19,13 @@ public class AppBackgroundMonitor implements LifecycleObserver {
 
     private boolean enabled = false;
     private boolean inBackground = true;
+
+    protected ArrayList<Listener> listeners = new ArrayList<>();
+
+    public interface Listener {
+        void didStart();
+        void didStop();
+    }
 
     public static AppBackgroundMonitor shared () {
         return instance;
@@ -42,6 +50,9 @@ public class AppBackgroundMonitor implements LifecycleObserver {
         if(ChatSDK.auth().userAuthenticated() && ChatSDK.config().disconnectFromFirebaseWhenInBackground) {
             ChatSDK.core().goOnline();
         }
+        for (Listener l : listeners) {
+            l.didStart();
+        }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -49,6 +60,21 @@ public class AppBackgroundMonitor implements LifecycleObserver {
         inBackground = true;
         if (ChatSDK.config().disconnectFromFirebaseWhenInBackground) {
             ChatSDK.core().goOffline();
+        }
+        for (Listener l : listeners) {
+            l.didStop();
+        }
+    }
+
+    public void addListener (Listener listener) {
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    public void removeListener (Listener listener) {
+        if (listeners.contains(listener)) {
+            listeners.remove(listener);
         }
     }
 

@@ -1,9 +1,9 @@
 package co.chatsdk.ui.threads;
 
 import android.os.Bundle;
-import android.support.annotation.LayoutRes;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.LayoutRes;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -25,6 +25,7 @@ import co.chatsdk.core.session.ChatSDK;
 import co.chatsdk.core.utils.DisposableList;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.main.BaseFragment;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Predicate;
 
 public abstract class ThreadsFragment extends BaseFragment {
@@ -33,6 +34,7 @@ public abstract class ThreadsFragment extends BaseFragment {
     protected EditText searchField;
     protected ThreadsListAdapter adapter;
     protected String filter;
+    protected MenuItem addMenuItem;
 
     private DisposableList disposableList = new DisposableList();
 
@@ -45,7 +47,6 @@ public abstract class ThreadsFragment extends BaseFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        initViews(inflater);
 
         disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(mainEventFilter())
@@ -66,6 +67,10 @@ public abstract class ThreadsFragment extends BaseFragment {
 
         reloadData();
 
+        mainView = inflater.inflate(activityLayout(), null);
+
+        initViews();
+
         return mainView;
     }
 
@@ -75,8 +80,7 @@ public abstract class ThreadsFragment extends BaseFragment {
         return R.layout.chat_sdk_activity_threads;
     }
 
-    public void initViews(LayoutInflater inflater) {
-        mainView = inflater.inflate(activityLayout(), null);
+    public void initViews() {
         searchField = mainView.findViewById(R.id.search_field);
         listThreads = mainView.findViewById(R.id.list_threads);
 
@@ -85,9 +89,9 @@ public abstract class ThreadsFragment extends BaseFragment {
         listThreads.setLayoutManager(new LinearLayoutManager(this.getActivity()));
         listThreads.setAdapter(adapter);
 
-        disposableList.add(adapter.onClickObservable().subscribe(thread -> {
+        Disposable d = adapter.onClickObservable().subscribe(thread -> {
             ChatSDK.ui().startChatActivityForID(getContext(), thread.getEntityID());
-        }));
+        });
     }
 
     protected boolean allowThreadCreation () {
@@ -98,9 +102,9 @@ public abstract class ThreadsFragment extends BaseFragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (allowThreadCreation()) {
-            MenuItem item = menu.add(Menu.NONE, R.id.action_chat_sdk_add, 10, getString(R.string.thread_fragment_add_item_text));
-            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-            item.setIcon(R.drawable.ic_plus);
+            addMenuItem = menu.add(Menu.NONE, R.id.action_chat_sdk_add, 10, getString(R.string.thread_fragment_add_item_text));
+            addMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            addMenuItem.setIcon(R.drawable.ic_plus);
         }
     }
 

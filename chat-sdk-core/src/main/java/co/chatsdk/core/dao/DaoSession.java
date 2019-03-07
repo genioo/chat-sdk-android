@@ -14,6 +14,7 @@ import co.chatsdk.core.dao.User;
 import co.chatsdk.core.dao.LinkedAccount;
 import co.chatsdk.core.dao.ThreadMetaValue;
 import co.chatsdk.core.dao.FollowerLink;
+import co.chatsdk.core.dao.MessageMetaValue;
 import co.chatsdk.core.dao.ContactLink;
 import co.chatsdk.core.dao.Thread;
 import co.chatsdk.core.dao.UserMetaValue;
@@ -25,6 +26,7 @@ import co.chatsdk.core.dao.UserDao;
 import co.chatsdk.core.dao.LinkedAccountDao;
 import co.chatsdk.core.dao.ThreadMetaValueDao;
 import co.chatsdk.core.dao.FollowerLinkDao;
+import co.chatsdk.core.dao.MessageMetaValueDao;
 import co.chatsdk.core.dao.ContactLinkDao;
 import co.chatsdk.core.dao.ThreadDao;
 import co.chatsdk.core.dao.UserMetaValueDao;
@@ -45,6 +47,7 @@ public class DaoSession extends AbstractDaoSession {
     private final DaoConfig linkedAccountDaoConfig;
     private final DaoConfig threadMetaValueDaoConfig;
     private final DaoConfig followerLinkDaoConfig;
+    private final DaoConfig messageMetaValueDaoConfig;
     private final DaoConfig contactLinkDaoConfig;
     private final DaoConfig threadDaoConfig;
     private final DaoConfig userMetaValueDaoConfig;
@@ -56,6 +59,7 @@ public class DaoSession extends AbstractDaoSession {
     private final LinkedAccountDao linkedAccountDao;
     private final ThreadMetaValueDao threadMetaValueDao;
     private final FollowerLinkDao followerLinkDao;
+    private final MessageMetaValueDao messageMetaValueDao;
     private final ContactLinkDao contactLinkDao;
     private final ThreadDao threadDao;
     private final UserMetaValueDao userMetaValueDao;
@@ -83,6 +87,9 @@ public class DaoSession extends AbstractDaoSession {
         followerLinkDaoConfig = daoConfigMap.get(FollowerLinkDao.class).clone();
         followerLinkDaoConfig.initIdentityScope(type);
 
+        messageMetaValueDaoConfig = daoConfigMap.get(MessageMetaValueDao.class).clone();
+        messageMetaValueDaoConfig.initIdentityScope(type);
+
         contactLinkDaoConfig = daoConfigMap.get(ContactLinkDao.class).clone();
         contactLinkDaoConfig.initIdentityScope(type);
 
@@ -101,6 +108,7 @@ public class DaoSession extends AbstractDaoSession {
         linkedAccountDao = new LinkedAccountDao(linkedAccountDaoConfig, this);
         threadMetaValueDao = new ThreadMetaValueDao(threadMetaValueDaoConfig, this);
         followerLinkDao = new FollowerLinkDao(followerLinkDaoConfig, this);
+        messageMetaValueDao = new MessageMetaValueDao(messageMetaValueDaoConfig, this);
         contactLinkDao = new ContactLinkDao(contactLinkDaoConfig, this);
         threadDao = new ThreadDao(threadDaoConfig, this);
         userMetaValueDao = new UserMetaValueDao(userMetaValueDaoConfig, this);
@@ -112,6 +120,7 @@ public class DaoSession extends AbstractDaoSession {
         registerDao(LinkedAccount.class, linkedAccountDao);
         registerDao(ThreadMetaValue.class, threadMetaValueDao);
         registerDao(FollowerLink.class, followerLinkDao);
+        registerDao(MessageMetaValue.class, messageMetaValueDao);
         registerDao(ContactLink.class, contactLinkDao);
         registerDao(Thread.class, threadDao);
         registerDao(UserMetaValue.class, userMetaValueDao);
@@ -125,6 +134,7 @@ public class DaoSession extends AbstractDaoSession {
         linkedAccountDaoConfig.clearIdentityScope();
         threadMetaValueDaoConfig.clearIdentityScope();
         followerLinkDaoConfig.clearIdentityScope();
+        messageMetaValueDaoConfig.clearIdentityScope();
         contactLinkDaoConfig.clearIdentityScope();
         threadDaoConfig.clearIdentityScope();
         userMetaValueDaoConfig.clearIdentityScope();
@@ -153,6 +163,10 @@ public class DaoSession extends AbstractDaoSession {
 
     public FollowerLinkDao getFollowerLinkDao() {
         return followerLinkDao;
+    }
+
+    public MessageMetaValueDao getMessageMetaValueDao() {
+        return messageMetaValueDao;
     }
 
     public ContactLinkDao getContactLinkDao() {

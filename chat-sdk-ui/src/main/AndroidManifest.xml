@@ -5,6 +5,7 @@
     <!--For capturing photos in profile and chat UI-->
     <uses-feature android:name="android.hardware.camera" android:required="true" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -40,7 +41,7 @@
             android:theme="@style/ChatSDKSlidingTransactionTheme"/>
 
         <activity android:name=".chat.ChatActivity"
-            android:parentActivityName=".main.MainActivity"
+            android:parentActivityName=".main.MainAppBarActivity"
             android:launchMode = "singleTop"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:theme="@style/ChatSDKSlidingTransactionTheme">
@@ -64,7 +65,12 @@
             android:windowSoftInputMode="stateHidden"
             android:theme="@style/SdkTheme"/>
 
-        <activity android:name=".main.MainActivity"
+        <activity android:name=".main.MainAppBarActivity"
+            android:launchMode = "singleTask"
+            android:theme="@style/SdkTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize"/>
+
+        <activity android:name=".main.MainDrawActivity"
             android:launchMode = "singleTask"
             android:theme="@style/SdkTheme"
             android:windowSoftInputMode="stateHidden|adjustResize"/>

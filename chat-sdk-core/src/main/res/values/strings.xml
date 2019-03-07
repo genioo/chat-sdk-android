@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ChatSdkCore</string>
+    <string name="app_name">Chat SDK Core</string>
 
     <string name="image_message">Image</string>
     <string name="location_message">Location</string>
@@ -10,6 +10,7 @@
     <string name="sticker_message">Sticker</string>
     <string name="file_message">File</string>
     <string name="thread">Thread</string>
+    <string name="no_name">No Name</string>
 
     <string name="register">Register</string>
     <string name="login">Login</string>
@@ -20,7 +21,8 @@
     <string name="password">Password</string>
     <string name="logout">Logout</string>
     <string name="search">Search</string>
-    <string name="add_contacts">Add Contacts</string>
+    <string name="add_contacts">Add to Contacts</string>
+    <string name="delete_contact">Remove Contact</string>
     <string name="add_users">Add Users</string>
     <string name="start_chat">Start Chat</string>
     <string name="contacts_upper_case">CONTACTS</string>
@@ -32,7 +34,8 @@
     <string name="tap_here_for_contact_info">Tap here for contact info</string>
     <string name="search_with_name">Search with name</string>
     <string name="add_conversation">Add Conversation</string>
-    <string name="public_thread__is_created" formatted="false">Public thread %s is created</string>
+    <string name="thread__created" formatted="false">Thread %s created</string>
+    <string name="public_thread__created" formatted="false">Public thread %s created</string>
     <string name="creating_thread">Creating Thread</string>
 
     <string name="send_mail">Send Mail</string>
@@ -125,6 +128,9 @@
     <string name="permission_read_contacts_title">Contacts Access</string>
     <string name="permission_read_contacts_message">Grant permission to allow contact book search</string>
 
+    <string name="permission_location_title">Location Access</string>
+    <string name="permission_location_message">Grant permission to allow discovery by other users</string>
+
     <!--SearchActivity-->
     <string name="search_activity_no_text_input_toast">Please enter some text for the search</string>
     <string name="search_activity_no_user_found_toast">No match found</string>
@@ -201,7 +207,7 @@
     <string name="couldnt_load_sticker_pack">Couldn\'t load sticker pack</string>
     <string name="unable_to_load_image">Unable to load image</string>
     <string name="__permission_not_granted" formatted="true">%s permission not granted. Please enable this permission in your phone\'s settings.</string>
-    <string name="error_permission_not_granted">Permission not granted: %d</string>
+    <string name="error_permission_not_granted">Permission not granted: %s</string>
 
     <!--State-->
     <string name="sending">Sending&#8230;</string>
@@ -224,6 +230,8 @@
     <string name="block">Block</string>
     <string name="blocked">Blocked</string>
     <string name="unblock">Unblock</string>
+    <string name="contact_deleted">Contact deleted</string>
+    <string name="contact_added">Contact added</string>
     <string name="user_blocked">User blocked</string>
     <string name="user_unblocked">User unblocked</string>
     <string name="user_deleted">User deleted</string>
@@ -280,7 +288,7 @@
     <string name="last_seen_on__at__" formatted="false">Last seen on %s at %s</string>
 
     <!-- AppContext -->
-    <string name="preference_database_id">PREFERENCE_DATABASE_SESSION_ID</string>
+    <string name="preference_database_id" translatable="false">PREFERENCE_DATABASE_SESSION_ID</string>
 
     <!-- Hints -->
     <string name="email_field">Email</string>
@@ -347,5 +355,6 @@
     <string name="user_list_availability_placeholder">Availability</string>
 
     <string name="push_channel_name">Message Notifications</string>
+    <string name="search_threads">Search Threads</string>
 
 </resources>

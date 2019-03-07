@@ -12,7 +12,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Rect;
-import android.support.v7.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageButton;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -117,8 +117,7 @@ public class TextInputView extends LinearLayout implements View.OnKeyListener, T
         // Handle recording when the record button is held down
         btnSend.setOnTouchListener((view, motionEvent) ->  {
             if(recordOnPress) {
-                Disposable d = PermissionRequestHandler.shared().requestRecordAudio(getActivity())
-                        .concatWith(PermissionRequestHandler.shared().requestWriteExternalStorage(getActivity())).subscribe(() -> {
+                Disposable d = PermissionRequestHandler.shared().requestRecordAudio(getActivity()).subscribe(() -> {
                         // Start recording when we press down
                         if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                             startRecording(view);

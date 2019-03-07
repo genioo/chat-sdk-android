@@ -8,7 +8,7 @@
 package co.chatsdk.ui.threads;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -116,6 +116,7 @@ public class ThreadsListAdapter extends RecyclerView.Adapter<ThreadViewHolder> {
     public String getLastMessageText (Message lastMessage) {
         String messageText = Strings.t(R.string.no_messages);
         if (lastMessage != null) {
+
             messageText = Strings.payloadAsString(lastMessage);
         }
         return messageText;
