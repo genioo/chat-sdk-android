@@ -4,11 +4,18 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -25,7 +32,6 @@ import com.twitter.sdk.android.core.identity.TwitterLoginButton;
 import co.chatsdk.core.handlers.SocialLoginHandler;
 import co.chatsdk.core.session.ChatSDK;
 import co.chatsdk.core.types.AccountDetails;
-import co.chatsdk.core.types.AuthKeys;
 import co.chatsdk.firebase.FirebaseAuthenticationHandler;
 import io.reactivex.Completable;
 import io.reactivex.Single;
@@ -38,7 +44,7 @@ import io.reactivex.SingleOnSubscribe;
 public class FirebaseSocialLoginHandler implements SocialLoginHandler {
 
     // Facebook
-//    private CallbackManager facebookCallbackManager;
+    private CallbackManager facebookCallbackManager;
 
     // Google
     private GoogleSignInOptions gso;
@@ -71,35 +77,31 @@ public class FirebaseSocialLoginHandler implements SocialLoginHandler {
 
     @Override
     public Completable loginWithFacebook(final Activity activity) {
-//        return Single.create((SingleOnSubscribe<AuthCredential>) e -> {
-//
-//            LoginButton button = new LoginButton(activity);
-//            facebookCallbackManager = CallbackManager.Factory.create();
-//            button.registerCallback(facebookCallbackManager, new FacebookCallback<LoginResult>() {
-//                @Override
-//                public void onSuccess(LoginResult loginResult) {
-//
-//                    ChatSDK.auth().addLoginInfoData(AuthKeys.Token, loginResult.getAccessToken().getToken());
-//                    ChatSDK.auth().addLoginInfoData(AuthKeys.Type, AccountDetails.Type.Facebook.ordinal());
-//
-//                    e.onSuccess(FacebookAuthProvider.getCredential(loginResult.getAccessToken().getToken()));
-//                }
-//
-//                @Override
-//                public void onCancel() {
-//                    e.onError(null);
-//                }
-//
-//                @Override
-//                public void onError(FacebookException error) {
-//                    e.onError(error);
-//                }
-//            });
-//
-//            button.callOnClick();
-//
-//        }).flatMapCompletable(authCredential -> signInWithCredential(activity, authCredential));
-        return Completable.complete();
+        return Single.create((SingleOnSubscribe<AuthCredential>) e -> {
+
+            LoginButton button = new LoginButton(activity);
+            facebookCallbackManager = CallbackManager.Factory.create();
+            button.registerCallback(facebookCallbackManager, new FacebookCallback<LoginResult>() {
+                @Override
+                public void onSuccess(LoginResult loginResult) {
+
+                    e.onSuccess(FacebookAuthProvider.getCredential(loginResult.getAccessToken().getToken()));
+                }
+
+                @Override
+                public void onCancel() {
+                    e.onError(null);
+                }
+
+                @Override
+                public void onError(FacebookException error) {
+                    e.onError(error);
+                }
+            });
+
+            button.callOnClick();
+
+        }).flatMapCompletable(authCredential -> signInWithCredential(activity, authCredential));
     }
 
     @Override
@@ -110,10 +112,6 @@ public class FirebaseSocialLoginHandler implements SocialLoginHandler {
             twitterButton.setCallback(new Callback<TwitterSession>() {
                 @Override
                 public void success(Result<TwitterSession> result) {
-
-                    ChatSDK.auth().addLoginInfoData(AuthKeys.Token, result.data.getAuthToken().token);
-                    ChatSDK.auth().addLoginInfoData(AuthKeys.Type, AccountDetails.Type.Twitter.ordinal());
-
                     e.onSuccess(TwitterAuthProvider.getCredential(result.data.getAuthToken().token, result.data.getAuthToken().secret));
                 }
 
@@ -153,9 +151,9 @@ public class FirebaseSocialLoginHandler implements SocialLoginHandler {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if(facebookCallbackManager != null) {
-//            facebookCallbackManager.onActivityResult(requestCode, resultCode, data);
-//        }
+        if(facebookCallbackManager != null) {
+            facebookCallbackManager.onActivityResult(requestCode, resultCode, data);
+        }
 
         if (requestCode == RC_GOOGLE_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
@@ -186,7 +184,7 @@ public class FirebaseSocialLoginHandler implements SocialLoginHandler {
 
     @Override
     public void logout() {
-//        LoginManager.getInstance().logOut();
+        LoginManager.getInstance().logOut();
     }
 
     public Completable signInWithCredential (final Activity activity, final AuthCredential credential) {

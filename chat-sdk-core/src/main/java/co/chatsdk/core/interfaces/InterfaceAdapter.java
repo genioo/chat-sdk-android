@@ -3,15 +3,18 @@ package co.chatsdk.core.interfaces;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
 import co.chatsdk.core.Tab;
-import co.chatsdk.core.dao.User;
-import co.chatsdk.core.types.SearchActivityType;
 import co.chatsdk.core.dao.Thread;
+import co.chatsdk.core.dao.User;
+import co.chatsdk.core.types.MessageType;
+import co.chatsdk.core.types.SearchActivityType;
+import co.chatsdk.core.utils.NotificationDisplayHandler;
 
 /**
  * Created by benjaminsmiley-andrews on 12/07/2017.
@@ -34,6 +37,7 @@ public interface InterfaceAdapter {
     Class getProfileActivity();
 
     List<Tab> defaultTabs ();
+    List<Tab> tabs();
 
     Tab privateThreadsTab ();
     Tab publicThreadsTab ();
@@ -41,6 +45,14 @@ public interface InterfaceAdapter {
     Tab profileTab ();
 
     Activity profileActivity (User user);
+
+    void addTab(Tab tab);
+    void addTab(Tab tab, int index);
+
+    void addTab(String title, int icon, Fragment fragment);
+    void addTab(String title, int icon, Fragment fragment, int index);
+
+    void removeTab(int index);
 
     void startActivity(Context context, Class activity);
     void startActivity (Context context, Intent intent);
@@ -64,10 +76,14 @@ public interface InterfaceAdapter {
     void setChatOptionsHandler (ChatOptionsHandler handler);
     ChatOptionsHandler getChatOptionsHandler (ChatOptionsDelegate delegate);
 
-    void addCustomMessageHandler (CustomMessageHandler handler);
-    void removeCustomMessageHandler (CustomMessageHandler handler);
-    List<CustomMessageHandler> getCustomMessageHandlers();
+    void setMessageHandler(MessageDisplayHandler handler, MessageType type);
+    void removeMessageHandler(MessageType type);
+    MessageDisplayHandler getMessageHandler(MessageType type);
+
+    Collection<MessageDisplayHandler> getMessageHandlers();
 
     boolean showLocalNotifications(Thread thread);
     void setLocalNotificationHandler(LocalNotificationHandler handler);
+
+    public NotificationDisplayHandler notificationDisplayHandler ();
 }

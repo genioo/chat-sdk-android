@@ -1,10 +1,13 @@
 package co.chatsdk.core.base;
 
+import java.util.HashMap;
+
 import co.chatsdk.core.handlers.AudioMessageHandler;
 import co.chatsdk.core.handlers.AuthenticationHandler;
 import co.chatsdk.core.handlers.BlockingHandler;
 import co.chatsdk.core.handlers.ContactHandler;
 import co.chatsdk.core.handlers.CoreHandler;
+import co.chatsdk.core.handlers.EncryptionHandler;
 import co.chatsdk.core.handlers.EventHandler;
 import co.chatsdk.core.handlers.HookHandler;
 import co.chatsdk.core.handlers.ImageMessageHandler;
@@ -12,6 +15,7 @@ import co.chatsdk.core.handlers.LastOnlineHandler;
 import co.chatsdk.core.handlers.LocationMessageHandler;
 import co.chatsdk.core.handlers.ModerationHandler;
 import co.chatsdk.core.handlers.NearbyUsersHandler;
+import co.chatsdk.core.handlers.ProfilePicturesHandler;
 import co.chatsdk.core.handlers.PublicThreadHandler;
 import co.chatsdk.core.handlers.PushHandler;
 import co.chatsdk.core.handlers.ReadReceiptHandler;
@@ -44,6 +48,7 @@ public class BaseNetworkAdapter {
     public ModerationHandler moderation;
     public SearchHandler search;
     public PublicThreadHandler publicThread;
+    public ProfilePicturesHandler profilePictures;
     public BlockingHandler blocking;
     public LastOnlineHandler lastOnline;
     public NearbyUsersHandler nearbyUsers;
@@ -53,5 +58,16 @@ public class BaseNetworkAdapter {
     public SocialLoginHandler socialLogin;
     public EventHandler events;
     public HookHandler hook = new BaseHookHandler();
+    public EncryptionHandler encryption;
+
+    private HashMap<String, Object> handlers = new HashMap<>();
+
+    public void setHandler(Object handler, String name) {
+        handlers.put(name, handler);
+    }
+
+    public Object getHandler (String name) {
+        return handlers.get(name);
+    }
 
 }

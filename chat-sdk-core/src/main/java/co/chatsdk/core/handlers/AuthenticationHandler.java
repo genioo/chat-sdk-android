@@ -19,9 +19,6 @@ public interface AuthenticationHandler {
     /**
     * Authenticate with Firebase
     */
-    @Deprecated
-    Completable authenticateWithMap (final Map<String, Object> details);
-
     Completable authenticate (AccountDetails details);
 
     /**
@@ -35,7 +32,7 @@ public interface AuthenticationHandler {
     Boolean userAuthenticatedThisSession();
 
     /**
-    * Logout the user from the current account
+    * DidLogout the user from the current account
     */
     Completable logout();
 

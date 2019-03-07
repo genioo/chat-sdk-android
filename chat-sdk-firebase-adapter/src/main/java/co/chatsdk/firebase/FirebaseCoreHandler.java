@@ -13,12 +13,11 @@ import java.net.URL;
 import java.util.Date;
 
 import co.chatsdk.core.base.AbstractCoreHandler;
-import co.chatsdk.core.base.BaseHookHandler;
 import co.chatsdk.core.dao.User;
 import co.chatsdk.core.events.EventType;
 import co.chatsdk.core.events.NetworkEvent;
+import co.chatsdk.core.hook.HookEvent;
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.types.ChatError;
 import co.chatsdk.core.types.FileUploadResult;
 import co.chatsdk.core.utils.CrashReportingCompletableObserver;
 import co.chatsdk.core.utils.DisposableList;
@@ -40,51 +39,54 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
 
     private DisposableList disposableList = new DisposableList();
 
-    public FirebaseCoreHandler () {
+    public FirebaseCoreHandler() {
         // When the user logs out, turn off all the existing listeners
         FirebaseEventHandler.shared().source()
                 .filter(NetworkEvent.filterType(EventType.Logout))
                 .subscribe(networkEvent -> disposableList.dispose());
     }
 
-    public Completable pushUser () {
+    public Completable pushUser() {
         return Single.create((SingleOnSubscribe<User>) e -> {
-
-            // Check to see if the avatar URL is local or remote
-            File avatar = new File(new URI(ChatSDK.currentUser().getAvatarURL()).getPath());
-            Bitmap bitmap = BitmapFactory.decodeFile(avatar.getPath());
-
-            if (new URL(ChatSDK.currentUser().getAvatarURL()).getHost() != null && bitmap != null && ChatSDK.upload() != null) {
-                // Upload the image
-                ChatSDK.upload().uploadImage(bitmap).subscribe(new Observer<FileUploadResult>() {
-                    @Override
-                    public void onSubscribe(@NonNull Disposable d) {
-                    }
-
-                    @Override
-                    public void onNext(@NonNull FileUploadResult fileUploadResult) {
-                        if (fileUploadResult.urlValid()) {
-                            ChatSDK.currentUser().setAvatarURL(fileUploadResult.url);
-                            ChatSDK.currentUser().update();
-                            ChatSDK.events().source().onNext(NetworkEvent.userMetaUpdated(ChatSDK.currentUser()));
-                        }
-                    }
-
-                    @Override
-                    public void onError(@NonNull Throwable ex) {
-                        ChatSDK.logError(ex);
-                        e.onSuccess(ChatSDK.currentUser());
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        e.onSuccess(ChatSDK.currentUser());
-                    }
-                });
-            } else {
+            String url = ChatSDK.currentUser().getAvatarURL();
+            if (url == null || url.isEmpty()) {
                 e.onSuccess(ChatSDK.currentUser());
-            }
+            } else {
+                // Check to see if the avatar URL is local or remote
+                File avatar = new File(new URI(ChatSDK.currentUser().getAvatarURL()).getPath());
+                Bitmap bitmap = BitmapFactory.decodeFile(avatar.getPath());
 
+                if (new URL(ChatSDK.currentUser().getAvatarURL()).getHost() != null && bitmap != null && ChatSDK.upload() != null) {
+                    // Upload the image
+                    ChatSDK.upload().uploadImage(bitmap).subscribe(new Observer<FileUploadResult>() {
+                        @Override
+                        public void onSubscribe(@NonNull Disposable d) {
+                        }
+
+                        @Override
+                        public void onNext(@NonNull FileUploadResult fileUploadResult) {
+                            if (fileUploadResult.urlValid()) {
+                                ChatSDK.currentUser().setAvatarURL(fileUploadResult.url);
+                                ChatSDK.currentUser().update();
+                                ChatSDK.events().source().onNext(NetworkEvent.userMetaUpdated(ChatSDK.currentUser()));
+                            }
+                        }
+
+                        @Override
+                        public void onError(@NonNull Throwable ex) {
+                            ChatSDK.logError(ex);
+                            e.onSuccess(ChatSDK.currentUser());
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            e.onSuccess(ChatSDK.currentUser());
+                        }
+                    });
+                } else {
+                    e.onSuccess(ChatSDK.currentUser());
+                }
+            }
         }).flatMapCompletable(user -> new UserWrapper(user).push()).subscribeOn(Schedulers.single());
     }
 
@@ -94,8 +96,8 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
         if (current != null && StringUtils.isNotEmpty(current.getEntityID())) {
             return UserWrapper.initWithModel(currentUserModel()).goOnline();
         }
-        if(ChatSDK.hook() != null) {
-            ChatSDK.hook().executeHook(BaseHookHandler.SetUserOnline, null);
+        if (ChatSDK.hook() != null) {
+            ChatSDK.hook().executeHook(HookEvent.UserDidConnect, null).subscribe(new CrashReportingCompletableObserver());;
         }
 
         return Completable.complete();
@@ -103,14 +105,16 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
 
     public Completable setUserOffline() {
         User current = ChatSDK.currentUser();
-        if (current != null && StringUtils.isNotEmpty(current.getEntityID()))
-        {
-            // Update the last online figure then go offline
-            return updateLastOnline()
-                    .concatWith(UserWrapper.initWithModel(currentUserModel()).goOffline());
+
+        Completable completable = Completable.complete();
+        if (ChatSDK.hook() != null) {
+            completable = ChatSDK.hook().executeHook(HookEvent.UserWillDisconnect, null);
         }
-        if(ChatSDK.hook() != null) {
-            ChatSDK.hook().executeHook(BaseHookHandler.SetUserOffline, null);
+
+        if (current != null && StringUtils.isNotEmpty(current.getEntityID())) {
+            // Update the last online figure then go offline
+            return completable.concatWith(updateLastOnline()
+                    .concatWith(UserWrapper.initWithModel(currentUserModel()).goOffline()));
         }
 
         return Completable.complete();
@@ -122,18 +126,18 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
     }
 
     public void goOnline() {
+        super.goOnline();
         FirebasePaths.firebaseRawRef().child(".info/connected").addListenerForSingleValueEvent(new FirebaseEventListener().onValue((snapshot, hasValue) -> {
-            if(hasValue) {
+            if (hasValue) {
                 Timber.v("Already online!");
-            }
-            else {
+            } else {
                 DatabaseReference.goOnline();
             }
             setUserOnline().subscribe(new CrashReportingCompletableObserver(disposableList));
         }));
     }
 
-    public Completable updateLastOnline () {
+    public Completable updateLastOnline() {
         return Completable.create(e -> {
             User currentUser = ChatSDK.currentUser();
             currentUser.setLastOnline(new Date());
@@ -142,22 +146,22 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
         }).concatWith(pushUser()).subscribeOn(Schedulers.single());
     }
 
-    public Single<Boolean> isOnline() {
-        return Single.create((SingleOnSubscribe<Boolean>) e -> {
-            if (ChatSDK.currentUser() == null) {
-                e.onError(ChatError.getError(ChatError.Code.NULL, "Current user is null"));
-                return;
-            }
+//    public Single<Boolean> isOnline() {
+//        return Single.create((SingleOnSubscribe<Boolean>) e -> {
+//            if (ChatSDK.currentUser() == null) {
+//                e.onError(ChatError.getError(ChatError.Code.NULL, "Current user is null"));
+//                return;
+//            }
+//
+//            FirebasePaths.userOnlineRef(ChatSDK.currentUser().getEntityID()).addListenerForSingleValueEvent(new FirebaseEventListener().onValue((snapshot, hasValue) -> {
+//                updateLastOnline().subscribe(new CrashReportingCompletableObserver(disposableList));
+//                e.onSuccess((Boolean) snapshot.getValue());
+//            }));
+//
+//        }).subscribeOn(Schedulers.single());
+//    }
 
-            FirebasePaths.userOnlineRef(ChatSDK.currentUser().getEntityID()).addListenerForSingleValueEvent(new FirebaseEventListener().onValue((snapshot, hasValue) -> {
-                updateLastOnline().subscribe(new CrashReportingCompletableObserver(disposableList));
-                e.onSuccess((Boolean) snapshot.getValue());
-            }));
-
-        }).subscribeOn(Schedulers.single());
-    }
-
-    public Completable userOn (final User user) {
+    public Completable userOn(final User user) {
         return Completable.create(e -> {
             final UserWrapper wrapper = new UserWrapper(user);
             disposableList.add(wrapper.onlineOn().doOnDispose(wrapper::onlineOff).subscribe(aBoolean -> {
@@ -170,13 +174,13 @@ public class FirebaseCoreHandler extends AbstractCoreHandler {
         });
     }
 
-    public void userOff (final User user) {
+    public void userOff(final User user) {
         UserWrapper wrapper = new UserWrapper(user);
         wrapper.onlineOff();
         wrapper.metaOff();
     }
 
-    public void save () {
+    public void save() {
 
     }
 }

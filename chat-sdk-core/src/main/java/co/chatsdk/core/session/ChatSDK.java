@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import co.chatsdk.core.base.BaseNetworkAdapter;
 import co.chatsdk.core.dao.DaoCore;
 import co.chatsdk.core.dao.Message;
+import co.chatsdk.core.dao.Thread;
 import co.chatsdk.core.dao.User;
 import co.chatsdk.core.error.ChatSDKException;
 import co.chatsdk.core.events.EventType;
@@ -20,12 +21,14 @@ import co.chatsdk.core.handlers.AuthenticationHandler;
 import co.chatsdk.core.handlers.BlockingHandler;
 import co.chatsdk.core.handlers.ContactHandler;
 import co.chatsdk.core.handlers.CoreHandler;
+import co.chatsdk.core.handlers.EncryptionHandler;
 import co.chatsdk.core.handlers.EventHandler;
 import co.chatsdk.core.handlers.FileMessageHandler;
 import co.chatsdk.core.handlers.HookHandler;
 import co.chatsdk.core.handlers.ImageMessageHandler;
 import co.chatsdk.core.handlers.LastOnlineHandler;
 import co.chatsdk.core.handlers.LocationMessageHandler;
+import co.chatsdk.core.handlers.ProfilePicturesHandler;
 import co.chatsdk.core.handlers.PublicThreadHandler;
 import co.chatsdk.core.handlers.PushHandler;
 import co.chatsdk.core.handlers.ReadReceiptHandler;
@@ -41,8 +44,6 @@ import co.chatsdk.core.interfaces.LocalNotificationHandler;
 import co.chatsdk.core.interfaces.ThreadType;
 import co.chatsdk.core.types.ReadStatus;
 import co.chatsdk.core.utils.AppBackgroundMonitor;
-import co.chatsdk.core.utils.NotificationUtils;
-import co.chatsdk.core.dao.Thread;
 import io.reactivex.disposables.Disposable;
 import timber.log.Timber;
 
@@ -71,7 +72,7 @@ public class ChatSDK {
         return initialize(config, null, null);
     }
 
-    public static ChatSDK initialize (Configuration config, InterfaceAdapter interfaceAdapter, BaseNetworkAdapter networkAdapter) throws ChatSDKException {
+    public static ChatSDK initialize (Configuration config, BaseNetworkAdapter networkAdapter, InterfaceAdapter interfaceAdapter) throws ChatSDKException {
         shared().setContext(config.context.get());
         shared().config = config;
 
@@ -90,7 +91,7 @@ public class ChatSDK {
         else {
             shared().activateModule("FirebaseModule", "activate");
         }
-        
+
         // #213 Remove notifications on start.
         // shared().handleLocalNotifications();
 
@@ -150,7 +151,7 @@ public class ChatSDK {
                                 ReadStatus status = message.readStatusForUser(ChatSDK.currentUser());
                                 if (!message.isRead() && !status.is(ReadStatus.delivered())) {
                                     // Only show the alert if we'recyclerView not on the private threads tab
-                                    NotificationUtils.createMessageNotification(message);
+                                    ChatSDK.ui().notificationDisplayHandler().createMessageNotification(message);
                                 }
                             }
                         }
@@ -235,6 +236,10 @@ public class ChatSDK {
         return ChatSDK.core().currentUserModel();
     }
 
+    public static String currentUserID() {
+        return ChatSDK.core().currentUserModel().getEntityID();
+    }
+
     public static SearchHandler search () {
         return a().search;
     }
@@ -246,6 +251,8 @@ public class ChatSDK {
     public static BlockingHandler blocking () {
         return a().blocking;
     }
+
+    public static EncryptionHandler encryption () { return a().encryption; }
 
     public static LastOnlineHandler lastOnline () {
         return a().lastOnline;
@@ -291,8 +298,16 @@ public class ChatSDK {
         return a().typingIndicator;
     }
 
+    public static ProfilePicturesHandler profilePictures () {
+        return a().profilePictures;
+    }
+
     public static BaseNetworkAdapter a() {
         return NetworkManager.shared().a;
+    }
+
+    public static StorageManager db () {
+        return StorageManager.shared();
     }
 
 }

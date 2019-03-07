@@ -6,14 +6,17 @@ import com.google.firebase.database.DatabaseReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import co.chatsdk.core.base.BaseHookHandler;
 import co.chatsdk.core.dao.DaoCore;
+import co.chatsdk.core.dao.Keys;
 import co.chatsdk.core.dao.Thread;
 import co.chatsdk.core.dao.User;
 import co.chatsdk.core.events.NetworkEvent;
 import co.chatsdk.core.handlers.EventHandler;
+import co.chatsdk.core.hook.HookEvent;
 import co.chatsdk.core.interfaces.ThreadType;
 import co.chatsdk.core.session.ChatSDK;
+import co.chatsdk.core.session.StorageManager;
+import co.chatsdk.core.types.ConnectionType;
 import co.chatsdk.core.utils.CrashReportingCompletableObserver;
 import co.chatsdk.core.utils.CrashReportingObserver;
 import co.chatsdk.core.utils.DisposableList;
@@ -55,8 +58,8 @@ public class FirebaseEventHandler implements EventHandler {
 
         if(ChatSDK.hook() != null) {
             HashMap<String, Object> data = new HashMap<>();
-            data.put(BaseHookHandler.UserOn_User, user);
-            ChatSDK.hook().executeHook(BaseHookHandler.UserOn, data);
+            data.put(HookEvent.User, user);
+            ChatSDK.hook().executeHook(HookEvent.UserOn, data).subscribe(new CrashReportingCompletableObserver());;
         }
 
         // Remove all users from public threads
@@ -124,7 +127,7 @@ public class FirebaseEventHandler implements EventHandler {
 
             //TODO: Implement this
 
-            //FollowerLink follower = (FollowerLink) FirebaseInterface.objectFromSnapshot(snapshot);
+            //FollowerLink follower = (FollowerLink) FirebaseAdapter.objectFromSnapshot(snapshot);
 //
 //
 //
@@ -136,7 +139,7 @@ public class FirebaseEventHandler implements EventHandler {
 
         }).onChildRemoved((snapshot, hasValue) -> {
 
-//                FollowerLink follower = (FollowerLink) FirebaseInterface.objectFromSnapshot(snapshot);
+//                FollowerLink follower = (FollowerLink) FirebaseAdapter.objectFromSnapshot(snapshot);
 //                DaoCore.deleteEntity(follower);
 
             eventSource.onNext(NetworkEvent.followerRemoved());
@@ -148,7 +151,7 @@ public class FirebaseEventHandler implements EventHandler {
         ChildEventListener followingListener = followingRef.addChildEventListener(new FirebaseEventListener().onChildAdded((snapshot, s, hasValue) -> {
 
             // TODO: Implement this
-//                FollowerLink follower = (FollowerLink) FirebaseInterface.objectFromSnapshot(snapshot);
+//                FollowerLink follower = (FollowerLink) FirebaseAdapter.objectFromSnapshot(snapshot);
 //
 //                UserWrapper wrapper = UserWrapper.initWithModel(follower.getUser());
 //                wrapper.once();
@@ -158,12 +161,44 @@ public class FirebaseEventHandler implements EventHandler {
 
         }).onChildRemoved((snapshot, hasValue) -> {
 
-//                FollowerLink follower = (FollowerLink) FirebaseInterface.objectFromSnapshot(snapshot);
+//                FollowerLink follower = (FollowerLink) FirebaseAdapter.objectFromSnapshot(snapshot);
 //                DaoCore.deleteEntity(follower);
 
             eventSource.onNext(NetworkEvent.followingRemoved());
         }));
         FirebaseReferenceManager.shared().addRef(followersRef, followingListener);
+
+        DatabaseReference ref = FirebasePaths.userContactsRef(ChatSDK.currentUserID());
+
+        ref.addChildEventListener(new FirebaseEventListener().onChildAdded((snapshot, s, hasValue) -> {
+            if (hasValue) {
+                User contact = StorageManager.shared().fetchOrCreateEntityWithEntityID(User.class, snapshot.getKey());
+                Object value = snapshot.getValue();
+                if (value instanceof HashMap) {
+                    Object type = ((HashMap) value).get(Keys.Type);
+                    if (type instanceof Long) {
+                        ConnectionType connectionType = ConnectionType.values()[((Long) type).intValue()];
+                        ChatSDK.contact().addContactLocal(contact, connectionType);
+                        eventSource.onNext(NetworkEvent.contactAdded(contact));
+                    }
+                }
+            }
+        }));
+
+        ref.addChildEventListener(new FirebaseEventListener().onChildRemoved((snapshot, hasValue) -> {
+            if (hasValue) {
+                User contact = StorageManager.shared().fetchOrCreateEntityWithEntityID(User.class, snapshot.getKey());
+                Object value = snapshot.getValue();
+                if (value instanceof HashMap) {
+                    Object type = ((HashMap) value).get(Keys.Type);
+                    if (type instanceof Long) {
+                        ConnectionType connectionType = ConnectionType.values()[((Long) type).intValue()];
+                        ChatSDK.contact().deleteContactLocal(contact, connectionType);
+                        eventSource.onNext(NetworkEvent.contactDeleted(contact));
+                    }
+                }
+            }
+        }));
 
         contactsMetaOn().subscribe(new CrashReportingCompletableObserver(disposableList));
     }

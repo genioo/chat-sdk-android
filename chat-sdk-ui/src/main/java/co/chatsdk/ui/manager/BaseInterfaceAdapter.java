@@ -2,8 +2,10 @@ package co.chatsdk.ui.manager;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
+import android.util.SparseArray;
+
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.facebook.cache.disk.DiskCacheConfig;
 import com.facebook.common.util.ByteConstants;
@@ -12,10 +14,12 @@ import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.facebook.imagepipeline.listener.RequestListener;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import co.chatsdk.core.Tab;
@@ -24,14 +28,19 @@ import co.chatsdk.core.dao.User;
 import co.chatsdk.core.interfaces.ChatOption;
 import co.chatsdk.core.interfaces.ChatOptionsDelegate;
 import co.chatsdk.core.interfaces.ChatOptionsHandler;
-import co.chatsdk.core.interfaces.CustomMessageHandler;
+import co.chatsdk.core.interfaces.MessageDisplayHandler;
 import co.chatsdk.core.interfaces.InterfaceAdapter;
 import co.chatsdk.core.interfaces.LocalNotificationHandler;
 import co.chatsdk.core.session.ChatSDK;
 import co.chatsdk.core.session.InterfaceManager;
+import co.chatsdk.core.types.MessageType;
 import co.chatsdk.core.types.SearchActivityType;
+import co.chatsdk.core.utils.NotificationDisplayHandler;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.chat.ChatActivity;
+import co.chatsdk.ui.chat.handlers.ImageMessageDisplayHandler;
+import co.chatsdk.ui.chat.handlers.LocationMessageDisplayHandler;
+import co.chatsdk.ui.chat.handlers.TextMessageDisplayHandler;
 import co.chatsdk.ui.chat.options.DialogChatOptionsHandler;
 import co.chatsdk.ui.chat.options.LocationChatOption;
 import co.chatsdk.ui.chat.options.MediaChatOption;
@@ -39,6 +48,8 @@ import co.chatsdk.ui.contacts.ContactsFragment;
 import co.chatsdk.ui.contacts.SelectContactActivity;
 import co.chatsdk.ui.login.LoginActivity;
 import co.chatsdk.ui.main.MainActivity;
+import co.chatsdk.ui.main.MainAppBarActivity;
+import co.chatsdk.ui.main.MainDrawActivity;
 import co.chatsdk.ui.profile.EditProfileActivity;
 import co.chatsdk.ui.profile.ProfileActivity;
 import co.chatsdk.ui.profile.ProfileFragment;
@@ -52,15 +63,18 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     public List<SearchActivityType> searchActivities = new ArrayList<>();
     public List<ChatOption> chatOptions = new ArrayList<>();
     public ChatOptionsHandler chatOptionsHandler = null;
-    public List<CustomMessageHandler> customMessageHandlers = new ArrayList<>();
+    public Map<Integer,MessageDisplayHandler> messageHandlers = new HashMap<>();
     public boolean defaultChatOptionsAdded = false;
     public LocalNotificationHandler localNotificationHandler;
+    public NotificationDisplayHandler notificationDisplayHandler;
 
-
-    protected boolean showLocalNotifications;
+    private SparseArray<Tab> additionalTabs = new SparseArray<>();
+    private Tab privateThreadsTab;
+    private Tab publicThreadsTab;
+    private Tab contactsTab;
+    private Tab profileTab;
 
     public BaseInterfaceAdapter (Context context) {
-
         DiskCacheConfig diskCacheConfig = DiskCacheConfig
                 .newBuilder(context)
                 .setMaxCacheSizeOnVeryLowDiskSpace(10 * ByteConstants.MB)
@@ -80,39 +94,79 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         Fresco.initialize(context, config);
 //        FLog.setMinimumLoggingLevel(FLog.VERBOSE);
 
+        setMessageHandler(new TextMessageDisplayHandler(), new MessageType(MessageType.Text));
+        setMessageHandler(new ImageMessageDisplayHandler(), new MessageType(MessageType.Image));
+        setMessageHandler(new LocationMessageDisplayHandler(), new MessageType(MessageType.Location));
 
+        privateThreadsTab = new Tab(context.getString(R.string.conversations), R.drawable.ic_action_private, privateThreadsFragment());
+        publicThreadsTab = new Tab(context.getString(R.string.chat_rooms), R.drawable.ic_action_public, publicThreadsFragment());
+        contactsTab = new Tab(context.getString(R.string.contacts), R.drawable.ic_action_contacts, contactsFragment());
+        profileTab = new Tab (context.getString(R.string.profile), R.drawable.ic_action_user, profileFragment(null));
     }
 
     @Override
     public List<Tab> defaultTabs() {
-
         ArrayList<Tab> tabs = new ArrayList<>();
         tabs.add(privateThreadsTab());
         tabs.add(publicThreadsTab());
         tabs.add(contactsTab());
         tabs.add(profileTab());
-
         return tabs;
     }
 
     @Override
+    public List<Tab> tabs() {
+        List<Tab> tabs = defaultTabs();
+        for (int i = 0; i < additionalTabs.size(); i++) {
+            int key = additionalTabs.keyAt(i);
+            tabs.add(key, additionalTabs.get(key));
+        }
+        return tabs;
+    }
+
+    @Override
+    public void addTab(Tab tab) {
+        additionalTabs.append(tabs().size(), tab);
+    }
+
+    @Override
+    public void addTab(Tab tab, int index) {
+        additionalTabs.append(index, tab);
+    }
+
+    @Override
+    public void addTab(String title, int icon, Fragment fragment) {
+        addTab(new Tab(title, icon, fragment));
+    }
+
+    @Override
+    public void addTab(String title, int icon, Fragment fragment, int index) {
+        addTab(new Tab(title, icon, fragment), index);
+    }
+
+    @Override
+    public void removeTab(int index) {
+        additionalTabs.remove(index);
+    }
+
+    @Override
     public Tab privateThreadsTab() {
-        return new Tab(R.string.conversations, R.drawable.ic_action_private, privateThreadsFragment());
+        return privateThreadsTab;
     }
 
     @Override
     public Tab publicThreadsTab() {
-        return new Tab(R.string.chat_rooms, R.drawable.ic_action_public, publicThreadsFragment());
+        return publicThreadsTab;
     }
 
     @Override
     public Tab contactsTab() {
-        return new Tab(R.string.contacts, R.drawable.ic_action_contacts, contactsFragment());
+        return contactsTab;
     }
 
     @Override
     public Tab profileTab() {
-        return new Tab (R.string.profile, R.drawable.ic_action_user, ProfileFragment.newInstance());
+        return profileTab;
     }
 
     @Override
@@ -147,7 +201,7 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
 
     @Override
     public Class getMainActivity() {
-        return MainActivity.class;
+        return MainAppBarActivity.class;
     }
 
     @Override
@@ -318,22 +372,26 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     }
 
     @Override
-    public void addCustomMessageHandler(CustomMessageHandler handler) {
-        if(!customMessageHandlers.contains(handler)) {
-            customMessageHandlers.add(handler);
+    public void setMessageHandler(MessageDisplayHandler handler, MessageType type) {
+        messageHandlers.put(type.value(), handler);
+    }
+
+    @Override
+    public void removeMessageHandler(MessageType type) {
+        MessageDisplayHandler handler = getMessageHandler(type);
+        if (handler != null) {
+            messageHandlers.remove(handler);
         }
     }
 
     @Override
-    public void removeCustomMessageHandler(CustomMessageHandler handler) {
-        if(customMessageHandlers.contains(handler)) {
-            customMessageHandlers.remove(handler);
-        }
+    public Collection<MessageDisplayHandler> getMessageHandlers() {
+        return messageHandlers.values();
     }
 
     @Override
-    public List<CustomMessageHandler> getCustomMessageHandlers() {
-        return customMessageHandlers;
+    public MessageDisplayHandler getMessageHandler(MessageType type) {
+        return messageHandlers.get(type.value());
     }
 
     @Override
@@ -349,6 +407,13 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     @Override
     public void setLocalNotificationHandler(LocalNotificationHandler handler) {
         this.localNotificationHandler = handler;
+    }
+
+    public NotificationDisplayHandler notificationDisplayHandler () {
+        if(notificationDisplayHandler == null) {
+            notificationDisplayHandler = new NotificationDisplayHandler();
+        }
+        return notificationDisplayHandler;
     }
 
 }
