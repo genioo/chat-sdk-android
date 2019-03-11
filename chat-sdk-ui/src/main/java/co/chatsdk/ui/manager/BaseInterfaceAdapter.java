@@ -55,6 +55,7 @@ import co.chatsdk.ui.profile.ProfileActivity;
 import co.chatsdk.ui.profile.ProfileFragment;
 import co.chatsdk.ui.search.SearchActivity;
 import co.chatsdk.ui.threads.PrivateThreadsFragment;
+import co.chatsdk.ui.threads.ThreadEditDetailsActivity;
 import co.chatsdk.ui.threads.PublicThreadsFragment;
 import co.chatsdk.ui.threads.ThreadDetailsActivity;
 
@@ -73,6 +74,10 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     private Tab publicThreadsTab;
     private Tab contactsTab;
     private Tab profileTab;
+
+    private String stringLocation;
+    private String stringTakePhoto;
+    private String stringChoosePhoto;
 
     public BaseInterfaceAdapter (Context context) {
         DiskCacheConfig diskCacheConfig = DiskCacheConfig
@@ -102,6 +107,10 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         publicThreadsTab = new Tab(context.getString(R.string.chat_rooms), R.drawable.ic_action_public, publicThreadsFragment());
         contactsTab = new Tab(context.getString(R.string.contacts), R.drawable.ic_action_contacts, contactsFragment());
         profileTab = new Tab (context.getString(R.string.profile), R.drawable.ic_action_user, profileFragment(null));
+
+        stringLocation = context.getResources().getString(R.string.location);
+        stringTakePhoto = context.getResources().getString(R.string.take_photo);
+        stringChoosePhoto = context.getResources().getString(R.string.choose_photo);
     }
 
     @Override
@@ -215,6 +224,11 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     }
 
     @Override
+    public Class getThreadEditDetailsActivity() {
+        return ThreadEditDetailsActivity.class;
+    }
+
+    @Override
     public Class getSelectContactActivity() {
         return SelectContactActivity.class;
     }
@@ -283,6 +297,12 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         startActivity(context, intent);
     }
 
+    public void startPublicThreadEditDetailsActivity(Context context, String threadEntityID){
+        Intent intent = new Intent(context, getThreadEditDetailsActivity());
+        intent.putExtra(InterfaceManager.THREAD_ENTITY_ID, threadEntityID);
+        startActivity(context, intent);
+    }
+
     public void startMainActivity (Context context, HashMap<String, Object> extras) {
         startActivity(context, getMainActivity(), extras);
     }
@@ -340,12 +360,12 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         // Setup the default chat options
         if (!defaultChatOptionsAdded) {
             if(ChatSDK.config().locationMessagesEnabled) {
-                chatOptions.add(new LocationChatOption("Location"));
+                chatOptions.add(new LocationChatOption(stringLocation));
             }
 
             if(ChatSDK.config().imageMessagesEnabled) {
-                chatOptions.add(new MediaChatOption("Take Photo", MediaChatOption.Type.TakePhoto));
-                chatOptions.add(new MediaChatOption("Choose Photo", MediaChatOption.Type.ChoosePhoto));
+                chatOptions.add(new MediaChatOption(stringTakePhoto, MediaChatOption.Type.TakePhoto));
+                chatOptions.add(new MediaChatOption(stringChoosePhoto, MediaChatOption.Type.ChoosePhoto));
             }
             defaultChatOptionsAdded = true;
         }

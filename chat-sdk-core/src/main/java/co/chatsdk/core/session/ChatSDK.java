@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import co.chatsdk.core.base.LocationProvider;
 import co.chatsdk.core.base.BaseNetworkAdapter;
 import co.chatsdk.core.dao.DaoCore;
 import co.chatsdk.core.dao.Message;
@@ -60,6 +61,8 @@ public class ChatSDK {
     public Configuration config;
     public Disposable localNotificationDisposable;
 
+    protected LocationProvider locationProvider;
+
     protected ChatSDK () {
     }
 
@@ -92,9 +95,12 @@ public class ChatSDK {
             shared().activateModule("FirebaseModule", "activate");
         }
 
+        shared().locationProvider = new LocationProvider();
+
         // #213 Remove notifications on start.
         // shared().handleLocalNotifications();
 
+        shared().handleLocalNotifications();
         // Monitor the app so if it goes into the background we know
         AppBackgroundMonitor.shared().setEnabled(true);
 
@@ -300,6 +306,10 @@ public class ChatSDK {
 
     public static ProfilePicturesHandler profilePictures () {
         return a().profilePictures;
+    }
+
+    public static LocationProvider locationProvider () {
+        return shared().locationProvider;
     }
 
     public static BaseNetworkAdapter a() {
