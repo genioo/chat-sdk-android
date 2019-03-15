@@ -129,10 +129,10 @@ public class DatabaseUpgradeHelper extends DaoMaster.OpenHelper {
 //            db.execSQL("ALTER TABLE " + ReadReceiptUserLinkDao.TABLENAME + " DROP COLUMN " + "READRECEIPTID");
 
             // Clear down the message database and re synchronize
-            List<Message> messages = DaoCore.fetchEntitiesOfClass(Message.class);
-            for (Message m : messages) {
-                DaoCore.deleteEntity(m);
-            }
+//            List<Message> messages = DaoCore.fetchEntitiesOfClass(Message.class);
+//            for (Message m : messages) {
+//                DaoCore.deleteEntity(m);
+//            }
         }
     }
 
