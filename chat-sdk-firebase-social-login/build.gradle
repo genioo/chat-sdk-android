@@ -39,7 +39,7 @@ dependencies {
 
     api "com.google.firebase:firebase-auth:$firebaseAuthVersion"
     api "com.google.android.gms:play-services-auth:$playAuthVersion"
-    api "com.facebook.android:facebook-login:$facebookLoginVersion"
+//    api "com.facebook.android:facebook-login:$facebookLoginVersion"
     api "com.twitter.sdk.android:twitter:$twitterVersion"
 
 }
