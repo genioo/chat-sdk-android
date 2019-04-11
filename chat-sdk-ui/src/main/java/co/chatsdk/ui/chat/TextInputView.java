@@ -313,6 +313,10 @@ public class TextInputView extends LinearLayout implements View.OnKeyListener, T
         etMessage.getText().clear();
     }
 
-
-
+    public void setContentVisibility(int visibility) {
+        for (int i = 0; i < getChildCount(); i++) {
+            View view = getChildAt(i);
+            view.setVisibility(visibility);
+        }
+    }
 }
