@@ -243,16 +243,11 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe((messages, throwable) -> {
                         if (throwable == null) {
-                            if (messages.size() < 2) {
-                                showToast(getString(R.string.chat_activity_no_more_messages_to_load_toast));
+                            for (Message m : messages) {
+                                messageListAdapter.addRow(m, false, false);
                             }
-                            else {
-                                for(Message m : messages) {
-                                    messageListAdapter.addRow(m, false, false);
-                                }
-                                messageListAdapter.sortAndNotify();
-                                recyclerView.getLayoutManager().scrollToPosition(messages.size());
-                            }
+                            messageListAdapter.sortAndNotify();
+                            recyclerView.getLayoutManager().scrollToPosition(messages.size());
                         }
                         mSwipeRefresh.setRefreshing(false);
                     }));
