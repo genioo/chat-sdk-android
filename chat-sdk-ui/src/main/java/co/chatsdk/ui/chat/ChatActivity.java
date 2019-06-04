@@ -12,12 +12,6 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import androidx.annotation.LayoutRes;
-import androidx.annotation.NonNull;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.appcompat.app.ActionBar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +28,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import co.chatsdk.core.audio.Recording;
 import co.chatsdk.core.dao.Message;
 import co.chatsdk.core.dao.Thread;
@@ -450,12 +450,13 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             return;
         }
 
-        if (thread != null && thread.typeIs(ThreadType.Public)) {
-            User currentUser = ChatSDK.currentUser();
-            ChatSDK.thread().addUsersToThread(thread, currentUser)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new CrashReportingCompletableObserver(disposableList));
-        }
+        // #575 Avoiding ChatSDK removing or adding user to the thread for public groups. We manage it with our notification icon in the RoomActivity
+        //        if (thread != null && thread.typeIs(ThreadType.Public)) {
+        //            User currentUser = ChatSDK.currentUser();
+        //            ChatSDK.thread().addUsersToThread(thread, currentUser)
+        //                    .observeOn(AndroidSchedulers.mainThread())
+        //                    .subscribe(new CrashReportingCompletableObserver(disposableList));
+        //        }
 
         // Set up the UI to dismiss keyboard on touch event, Option and Send buttons are not included.
         // If list is scrolling we ignoring the touch event.
@@ -502,9 +503,10 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         stopTyping(true);
         markRead();
 
-        if (thread != null && thread.typeIs(ThreadType.Public) && removeUserFromChatOnExit) {
-            ChatSDK.thread().removeUsersFromThread(thread, ChatSDK.currentUser()).observeOn(AndroidSchedulers.mainThread()).subscribe(new CrashReportingCompletableObserver());
-        }
+        // #575 Avoiding ChatSDK removing or adding user to the thread for public groups. We manage it with our notification icon in the RoomActivity
+        //        if (thread != null && thread.typeIs(ThreadType.Public) && removeUserFromChatOnExit) {
+        //            ChatSDK.thread().removeUsersFromThread(thread, ChatSDK.currentUser()).observeOn(AndroidSchedulers.mainThread()).subscribe(new CrashReportingCompletableObserver());
+        //        }
     }
 
     /**
