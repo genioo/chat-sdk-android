@@ -65,11 +65,13 @@ public class FirebaseEventHandler implements EventHandler {
         // Remove all users from public threads
         // These may not have been cleared down when we exited so clear them down and
         // start again
-        for(Thread thread : ChatSDK.thread().getThreads(ThreadType.Public)) {
-            for(User u : thread.getUsers()) {
-                thread.removeUser(u);
-            }
-        }
+
+        // #575 We avoid removing the user from Public threads, as we are controlling it in RoomActivity manually
+        //        for(Thread thread : ChatSDK.thread().getThreads(ThreadType.Public)) {
+        //            for(User u : thread.getUsers()) {
+        //                thread.removeUser(u);
+        //            }
+        //        }
 
         final DatabaseReference threadsRef = FirebasePaths.userThreadsRef(entityID);
         ChildEventListener threadsListener = threadsRef.addChildEventListener(new FirebaseEventListener().onChildAdded((snapshot, s, hasValue) -> {
