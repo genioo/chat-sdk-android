@@ -28,4 +28,5 @@ public class ImageMessageDisplayHandler extends AbstractMessageDisplayHandler {
         View row = row(isReply, activity);
         return new ImageMessageViewHolder(row, activity);
     }
+    
 }

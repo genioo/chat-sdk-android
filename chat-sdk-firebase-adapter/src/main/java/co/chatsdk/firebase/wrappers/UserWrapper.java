@@ -103,6 +103,7 @@ public class UserWrapper {
 
             ////////////////////////////////////////////////////////////////////////////////////////
             // #571 Split name
+            //TODO: Should only be done to USER!!!!
             String[] splitName = name.split(" ");
             if (splitName.length > 1) {
                 name = splitName[0] + " " + splitName[1].substring(0, 1) + ".";
