@@ -104,7 +104,7 @@ public class UserWrapper {
             ////////////////////////////////////////////////////////////////////////////////////////
             // #571 Split name
             String[] splitName = name.split(" ");
-            if (splitName.length > 0) {
+            if (splitName.length > 1) {
                 name = splitName[0] + " " + splitName[1].substring(0, 1) + ".";
             }
             ////////////////////////////////////////////////////////////////////////////////////////
