@@ -149,12 +149,12 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             ChatSDK.lastOnline().getLastOnline(thread.otherUser())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe((date, throwable) -> {
-                if (throwable == null && date != null) {
-                    Locale current = getResources().getConfiguration().locale;
-                    PrettyTime pt = new PrettyTime(current);
-                    setSubtitleText(String.format(getString(R.string.last_seen__), pt.format(date)));
-                }
-            });
+                        if (throwable == null && date != null) {
+                            Locale current = getResources().getConfiguration().locale;
+                            PrettyTime pt = new PrettyTime(current);
+                            setSubtitleText(String.format(getString(R.string.last_seen__), pt.format(date)));
+                        }
+                    });
         }
 
         initActionBar();
@@ -164,7 +164,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         setChatState(TypingIndicatorHandler.State.active);
 
-        if(enableTrace) {
+        if (enableTrace) {
             android.os.Debug.startMethodTracing("chat");
         }
 
@@ -175,7 +175,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         return super.getTaskDescriptionBitmap();
     }
 
-    protected ActionBar readyActionBarToCustomView () {
+    protected ActionBar readyActionBarToCustomView() {
         ActionBar ab = getSupportActionBar();
         ab.setDisplayShowHomeEnabled(false);
         ab.setDisplayShowTitleEnabled(false);
@@ -185,7 +185,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
     }
 
 
-    protected void initActionBar () {
+    protected void initActionBar() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 
@@ -217,11 +217,12 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         }
     }
 
-    protected @LayoutRes int activityLayout() {
+    protected @LayoutRes
+    int activityLayout() {
         return R.layout.chat_sdk_activity_chat;
     }
 
-    protected void initViews () {
+    protected void initViews() {
         // Set up the message box - this is the box that sits above the keyboard
         textInputView = findViewById(R.id.chat_sdk_message_box);
         textInputView.setDelegate(this);
@@ -235,7 +236,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
             List<MessageListItem> items = messageListAdapter.getMessageItems();
             Message firstMessage = null;
-            if(items.size() > 0) {
+            if (items.size() > 0) {
                 firstMessage = items.get(0).message;
             }
 
@@ -278,7 +279,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
     /**
      * Send text message
      *
-     * @param text to send.
+     * @param text          to send.
      * @param clearEditText if true clear the message edit text.
      */
     public void sendMessage(String text, boolean clearEditText) {
@@ -297,7 +298,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         scrollListTo(ListPosition.Bottom, false);
     }
 
-    protected void handleMessageSend (Observable<MessageSendProgress> observable) {
+    protected void handleMessageSend(Observable<MessageSendProgress> observable) {
         observable.observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<MessageSendProgress>() {
                     @Override
@@ -311,7 +312,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                         // It's best not to sort here because then we are just adding the message
                         // to the bottom of the list. We only sort after the message has also been
                         // received from Firebase so the datestamp is also correct
-                        if(messageListAdapter.addRow(messageSendProgress.message, false, true, messageSendProgress.uploadProgress)) {
+                        if (messageListAdapter.addRow(messageSendProgress.message, false, true, messageSendProgress.uploadProgress)) {
                             scrollListTo(ListPosition.Bottom, false);
                         }
                     }
@@ -343,27 +344,26 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         outState.putInt(LIST_POS, layoutManager().findFirstVisibleItemPosition());
     }
 
-    protected LinearLayoutManager layoutManager () {
+    protected LinearLayoutManager layoutManager() {
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         return layoutManager;
     }
 
     protected void setSubtitleText(String text) {
-        if(StringChecker.isNullOrEmpty(text)) {
-            if(thread.typeIs(ThreadType.Private1to1)) {
+        if (StringChecker.isNullOrEmpty(text)) {
+            if (thread.typeIs(ThreadType.Private1to1)) {
                 text = getString(R.string.tap_here_for_contact_info);
-            }
-            else {
+            } else {
                 text = "";
-                for(User u : thread.getUsers()) {
-                    if(!u.isMe()) {
+                for (User u : thread.getUsers()) {
+                    if (!u.isMe()) {
                         String name = u.getName();
                         if (name != null && name.length() > 0) {
                             text += name + ", ";
                         }
                     }
                 }
-                if(text.length() > 0) {
+                if (text.length() > 0) {
                     text = text.substring(0, text.length() - 2);
                 }
             }
@@ -392,7 +392,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                     message.update();
 
                     boolean isAdded = messageListAdapter.addRow(message, false, false);
-                    if(isAdded || message.getMessageStatus() == MessageSendStatus.None) {
+                    if (isAdded || message.getMessageStatus() == MessageSendStatus.None) {
                         messageListAdapter.sortAndNotify();
                         // Make sure to update for read receipts if necessary
                     } else if (ChatSDK.readReceipts() != null && message.getSender().isMe() && message.getReadStatus() != ReadStatus.read()) {
@@ -402,15 +402,14 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                     // Check if the message from the current user, If so return so we wont vibrate for the user messages.
                     if (message.getSender().isMe() && isAdded) {
                         scrollListTo(ListPosition.Bottom, layoutManager().findLastVisibleItemPosition() > messageListAdapter.size() - 2);
-                    }
-                    else {
+                    } else {
                         // If the user is near the bottom, then we scroll down when a message comes in
-                        if(layoutManager().findLastVisibleItemPosition() > messageListAdapter.size() - 5) {
+                        if (layoutManager().findLastVisibleItemPosition() > messageListAdapter.size() - 5) {
                             scrollListTo(ListPosition.Bottom, true);
                         }
                     }
 
-                    if(ChatSDK.readReceipts() != null) {
+                    if (ChatSDK.readReceipts() != null) {
                         ChatSDK.readReceipts().markRead(thread);
                     }
                 }));
@@ -434,9 +433,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(NetworkEvent.filterType(EventType.TypingStateChanged)).subscribe(networkEvent -> {
-                    if(networkEvent.thread.equals(thread)) {
+                    if (networkEvent.thread.equals(thread)) {
                         String typingText = networkEvent.text;
-                        if(typingText != null) {
+                        if (typingText != null) {
                             typingText += getString(R.string.typing);
                         }
                         Timber.v(typingText);
@@ -504,9 +503,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         markRead();
 
         // #575 Avoiding ChatSDK removing or adding user to the thread for public groups. We manage it with our notification icon in the RoomActivity
-        //        if (thread != null && thread.typeIs(ThreadType.Public) && removeUserFromChatOnExit) {
-        //            ChatSDK.thread().removeUsersFromThread(thread, ChatSDK.currentUser()).observeOn(AndroidSchedulers.mainThread()).subscribe(new CrashReportingCompletableObserver());
-        //        }
+        //                if (thread != null && thread.typeIs(ThreadType.Public) && removeUserFromChatOnExit) {
+        //                    ChatSDK.thread().removeUsersFromThread(thread, ChatSDK.currentUser()).observeOn(AndroidSchedulers.mainThread()).subscribe(new CrashReportingCompletableObserver());
+        //                }
     }
 
     /**
@@ -514,7 +513,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
      */
     @Override
     protected void onDestroy() {
-        if(enableTrace) {
+        if (enableTrace) {
             android.os.Debug.stopMethodTracing();
         }
         super.onDestroy();
@@ -544,8 +543,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
             if (resultCode == RESULT_OK) {
                 updateChat();
             }
-        }
-        else if (requestCode == SHOW_DETAILS) {
+        } else if (requestCode == SHOW_DETAILS) {
 
             if (resultCode == RESULT_OK) {
                 // Updating the selected chat id.
@@ -593,19 +591,17 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         if (id == R.id.action_chat_sdk_add) {
             startAddUsersActivity();
-        }
-        else if (id == R.id.action_chat_sdk_show) {
+        } else if (id == R.id.action_chat_sdk_show) {
             showUsersDialog();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    protected void markRead () {
-        if(ChatSDK.readReceipts() != null) {
+    protected void markRead() {
+        if (ChatSDK.readReceipts() != null) {
             ChatSDK.readReceipts().markRead(thread);
-        }
-        else {
+        } else {
             thread.markRead();
         }
     }
@@ -656,8 +652,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         if (bundle != null && (bundle.containsKey(InterfaceManager.THREAD_ENTITY_ID))) {
             this.bundle = bundle;
-        }
-        else {
+        } else {
             if (getIntent() == null || getIntent().getExtras() == null) {
                 finish();
                 return false;
@@ -667,7 +662,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         if (this.bundle.containsKey(InterfaceManager.THREAD_ENTITY_ID)) {
             String threadEntityID = this.bundle.getString(InterfaceManager.THREAD_ENTITY_ID);
-            if(threadEntityID != null) {
+            if (threadEntityID != null) {
                 thread = StorageManager.shared().fetchThreadWithEntityID(threadEntityID);
             }
         }
@@ -695,7 +690,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         initActionBar();
     }
 
-    public void startTyping () {
+    public void startTyping() {
         setChatState(TypingIndicatorHandler.State.composing);
         typingTimerDisposable = Observable.just(true).delay(5000, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.io())
@@ -704,7 +699,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
     @Override
     public void sendAudio(Recording recording) {
-        if(ChatSDK.audioMessage() != null) {
+        if (ChatSDK.audioMessage() != null) {
             handleMessageSend(ChatSDK.audioMessage().sendMessage(recording, thread));
         }
     }
@@ -724,21 +719,20 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         scrollListTo(ListPosition.Bottom, false);
     }
 
-    protected void stopTyping (boolean inactive) {
+    protected void stopTyping(boolean inactive) {
         if (typingTimerDisposable != null) {
             typingTimerDisposable.dispose();
             typingTimerDisposable = null;
         }
-        if(inactive) {
+        if (inactive) {
             setChatState(TypingIndicatorHandler.State.inactive);
-        }
-        else {
+        } else {
             setChatState(TypingIndicatorHandler.State.active);
         }
     }
 
-    protected void setChatState (TypingIndicatorHandler.State state) {
-        if(ChatSDK.typingIndicator() != null) {
+    protected void setChatState(TypingIndicatorHandler.State state) {
+        if (ChatSDK.typingIndicator() != null) {
             ChatSDK.typingIndicator().setChatState(state, thread)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new CrashReportingCompletableObserver(disposableList));
@@ -772,7 +766,6 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 //        }
 //        super.onBackPressed();
 //    }
-
     public void loadMessages(final boolean showLoadingIndicator, final int amountToLoad, final ListPosition toPosition) {
 
 //        if (showLoadingIndicator) {
@@ -780,7 +773,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 //            progressBar.setVisibility(View.VISIBLE);
 //        }
 //        else {
-            progressBar.setVisibility(View.INVISIBLE);
+        progressBar.setVisibility(View.INVISIBLE);
 //        }
 
         Disposable d = ChatSDK.thread().loadMoreMessagesForThread(null, thread)
@@ -800,18 +793,18 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
     }
 
     protected void loadMessages(List<Message> messages) {
-        if(!messages.isEmpty()){
+        if (!messages.isEmpty()) {
             messageListAdapter.setMessages(messages);
         }
     }
 
-    public void markAsDelivered(List<Message> messages){
+    public void markAsDelivered(List<Message> messages) {
         for (Message m : messages) {
             markAsDelivered(m);
         }
     }
 
-    public void markAsDelivered(Message message){
+    public void markAsDelivered(Message message) {
         message.setMessageStatus(MessageSendStatus.Delivered);
         message.update();
     }
@@ -821,8 +814,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         if (animated) {
             recyclerView.smoothScrollToPosition(listPos);
-        }
-        else {
+        } else {
             recyclerView.getLayoutManager().scrollToPosition(listPos);
         }
     }
@@ -848,15 +840,15 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
     @Override
     public void showOptions() {
-       removeUserFromChatOnExit = false;
-       optionsHandler = ChatSDK.ui().getChatOptionsHandler(this);
-       optionsHandler.show(this);
+        removeUserFromChatOnExit = false;
+        optionsHandler = ChatSDK.ui().getChatOptionsHandler(this);
+        optionsHandler.show(this);
     }
 
     @Override
     public void hideOptions() {
         removeUserFromChatOnExit = true;
-        if(optionsHandler != null) {
+        if (optionsHandler != null) {
             optionsHandler.hide();
         }
     }
@@ -868,10 +860,9 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
     @Override
     public void executeChatOption(ChatOption option) {
-        if(option.getType() == ChatOptionType.SendMessage) {
+        if (option.getType() == ChatOptionType.SendMessage) {
             handleMessageSend((Observable<MessageSendProgress>) option.execute(this, thread));
-        }
-        else {
+        } else {
             option.execute(this, thread).subscribe(new CrashReportingObserver<>());
         }
     }
