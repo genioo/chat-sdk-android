@@ -111,6 +111,9 @@ public class FirebaseEventHandler implements EventHandler {
             thread.messageRemovedOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageRemoved(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
             thread.usersOn().doOnNext(user1 -> eventSource.onNext(NetworkEvent.threadUsersChanged(thread.getModel(), user1))).subscribe(new CrashReportingObserver<>(disposableList));
 
+            // #577 Listening to meta for public groups...
+            thread.metaOn().doOnNext(thread1 -> eventSource.onNext(NetworkEvent.threadMetaUpdated(thread1))).subscribe(new CrashReportingObserver<>(disposableList));
+
             eventSource.onNext(NetworkEvent.threadAdded(thread.getModel()));
         }).onChildRemoved((snapshot, hasValue) -> {
             ThreadWrapper thread = new ThreadWrapper(snapshot.getKey());
