@@ -47,19 +47,20 @@ public class FirebaseEventHandler implements EventHandler {
         return instance;
     }
 
-    public void currentUserOn(final String entityID){
+    public void currentUserOn(final String entityID) {
 
-        if(isOn) {
+        if (isOn) {
             return;
         }
         isOn = true;
 
         final User user = DaoCore.fetchEntityWithEntityID(User.class, entityID);
 
-        if(ChatSDK.hook() != null) {
+        if (ChatSDK.hook() != null) {
             HashMap<String, Object> data = new HashMap<>();
             data.put(HookEvent.User, user);
-            ChatSDK.hook().executeHook(HookEvent.UserOn, data).subscribe(new CrashReportingCompletableObserver());;
+            ChatSDK.hook().executeHook(HookEvent.UserOn, data).subscribe(new CrashReportingCompletableObserver());
+            ;
         }
 
         // Remove all users from public threads
@@ -75,7 +76,7 @@ public class FirebaseEventHandler implements EventHandler {
 
         final DatabaseReference threadsRef = FirebasePaths.userThreadsRef(entityID);
         ChildEventListener threadsListener = threadsRef.addChildEventListener(new FirebaseEventListener().onChildAdded((snapshot, s, hasValue) -> {
-            if(hasValue) {
+            if (hasValue) {
                 final ThreadWrapper thread = new ThreadWrapper(snapshot.getKey());
 
                 thread.getModel().addUser(user);
@@ -83,7 +84,9 @@ public class FirebaseEventHandler implements EventHandler {
                 // Starting to listen to thread changes.
                 thread.on().doOnNext(thread14 -> eventSource.onNext(NetworkEvent.threadDetailsUpdated(thread14))).subscribe(new CrashReportingObserver<>(disposableList));
                 thread.lastMessageOn().doOnNext(thread13 -> eventSource.onNext(NetworkEvent.threadLastMessageUpdated(thread13))).subscribe(new CrashReportingObserver<>(disposableList));
+
                 thread.messagesOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageAdded(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
+
                 thread.messageRemovedOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageRemoved(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
                 thread.usersOn().doOnNext(user12 -> eventSource.onNext(NetworkEvent.threadUsersChanged(thread.getModel(), user12))).subscribe(new CrashReportingObserver<>(disposableList));
                 thread.metaOn().doOnNext(thread1 -> eventSource.onNext(NetworkEvent.threadMetaUpdated(thread.getModel()))).subscribe(new CrashReportingObserver<>(disposableList));
@@ -106,13 +109,15 @@ public class FirebaseEventHandler implements EventHandler {
 
             // Starting to listen to thread changes.
             thread.on().doOnNext(thread12 -> eventSource.onNext(NetworkEvent.threadDetailsUpdated(thread12))).subscribe(new CrashReportingObserver<>(disposableList));
-            thread.lastMessageOn().doOnNext(thread15 -> eventSource.onNext(NetworkEvent.threadLastMessageUpdated(thread15))).subscribe(new CrashReportingObserver<>(disposableList));
-            thread.messagesOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageAdded(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
-            thread.messageRemovedOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageRemoved(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
-            thread.usersOn().doOnNext(user1 -> eventSource.onNext(NetworkEvent.threadUsersChanged(thread.getModel(), user1))).subscribe(new CrashReportingObserver<>(disposableList));
 
             // #577 Listening to meta for public groups...
             thread.metaOn().doOnNext(thread1 -> eventSource.onNext(NetworkEvent.threadMetaUpdated(thread1))).subscribe(new CrashReportingObserver<>(disposableList));
+            thread.usersOn().doOnNext(user1 -> eventSource.onNext(NetworkEvent.threadUsersChanged(thread.getModel(), user1))).subscribe(new CrashReportingObserver<>(disposableList));
+
+            //#588 Avoid synchronising messages for public threads until user is inside the thread
+            //thread.lastMessageOn().doOnNext(thread15 -> eventSource.onNext(NetworkEvent.threadLastMessageUpdated(thread15))).subscribe(new CrashReportingObserver<>(disposableList));
+            //thread.messagesOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageAdded(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
+            //thread.messageRemovedOn().doOnNext(message -> eventSource.onNext(NetworkEvent.messageRemoved(message.getThread(), message))).subscribe(new CrashReportingObserver<>(disposableList));
 
             eventSource.onNext(NetworkEvent.threadAdded(thread.getModel()));
         }).onChildRemoved((snapshot, hasValue) -> {
@@ -208,7 +213,7 @@ public class FirebaseEventHandler implements EventHandler {
         contactsMetaOn().subscribe(new CrashReportingCompletableObserver(disposableList));
     }
 
-    private Completable contactsMetaOn () {
+    private Completable contactsMetaOn() {
         return Completable.create(e -> {
             ArrayList<Completable> completables = new ArrayList<>();
             for (User contact : ChatSDK.contact().contacts()) {
@@ -218,7 +223,7 @@ public class FirebaseEventHandler implements EventHandler {
         }).subscribeOn(Schedulers.single());
     }
 
-    public void userOff(final String entityID){
+    public void userOff(final String entityID) {
         isOn = false;
 
         final User user = DaoCore.fetchEntityWithEntityID(User.class, entityID);
@@ -229,8 +234,7 @@ public class FirebaseEventHandler implements EventHandler {
         FirebaseReferenceManager.shared().removeListeners(FirebasePaths.userFollowingRef(entityID));
 
         ThreadWrapper wrapper;
-        for (Thread thread : ChatSDK.thread().getThreads(ThreadType.All))
-        {
+        for (Thread thread : ChatSDK.thread().getThreads(ThreadType.All)) {
             wrapper = new ThreadWrapper(thread);
 
             wrapper.off();
@@ -249,11 +253,11 @@ public class FirebaseEventHandler implements EventHandler {
         disposableList.dispose();
     }
 
-    public PublishSubject<NetworkEvent> source () {
+    public PublishSubject<NetworkEvent> source() {
         return eventSource;
     }
 
-    public Observable<NetworkEvent> sourceOnMain () {
+    public Observable<NetworkEvent> sourceOnMain() {
         return eventSource.observeOn(AndroidSchedulers.mainThread());
     }
 
