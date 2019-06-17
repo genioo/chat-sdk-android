@@ -12,7 +12,6 @@ import co.chatsdk.ui.R;
 import co.chatsdk.ui.chat.viewholder.ImageMessageViewHolder;
 
 public class ImageMessageDisplayHandler extends AbstractMessageDisplayHandler {
-
     @Override
     public void updateMessageCellView(Message message, AbstractMessageViewHolder viewHolder, Context context) {
 

@@ -100,16 +100,6 @@ public class UserWrapper {
 
         // Setting the name.
         if (!StringChecker.isNullOrEmpty(name) && StringChecker.isNullOrEmpty(model.getName())) {
-
-            ////////////////////////////////////////////////////////////////////////////////////////
-            // #571 Split name
-            //TODO: Should only be done to USER!!!!
-            String[] splitName = name.split(" ");
-            if (splitName.length > 1) {
-                name = splitName[0] + " " + splitName[1].substring(0, 1) + ".";
-            }
-            ////////////////////////////////////////////////////////////////////////////////////////
-
             model.setName(name);
         }
         else {
