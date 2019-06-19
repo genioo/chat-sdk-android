@@ -17,7 +17,6 @@ import co.chatsdk.core.dao.Thread;
 import co.chatsdk.core.events.NetworkEvent;
 import co.chatsdk.core.interfaces.ThreadType;
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.session.InterfaceManager;
 import co.chatsdk.ui.R;
 import io.reactivex.functions.Predicate;
 
@@ -38,13 +37,11 @@ public class PublicThreadsFragment extends ThreadsFragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        super.onOptionsItemSelected(item);
-
         /* Cant use switch in the library*/
         int id = item.getItemId();
 
-        if (id == R.id.action_chat_sdk_add) {
-            InterfaceManager.shared().a.startActivity(getContext(), InterfaceManager.shared().a.getThreadEditDetailsActivity());
+        if (id == R.id.action_add) {
+            ChatSDK.ui().startThreadEditDetailsActivity(getContext(), null);
             return true;
         }
         return super.onOptionsItemSelected(item);

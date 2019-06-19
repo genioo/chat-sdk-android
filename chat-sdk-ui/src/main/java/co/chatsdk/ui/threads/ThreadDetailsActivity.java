@@ -7,47 +7,44 @@
 
 package co.chatsdk.ui.threads;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.LayoutRes;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.facebook.drawee.view.SimpleDraweeView;
 
-import org.apache.commons.lang3.StringUtils;
-
 import co.chatsdk.core.dao.Keys;
 import co.chatsdk.core.dao.Thread;
-import co.chatsdk.core.dao.ThreadMetaValue;
-import co.chatsdk.core.events.EventType;
 import co.chatsdk.core.events.NetworkEvent;
+import co.chatsdk.core.interfaces.ThreadType;
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.session.InterfaceManager;
-import co.chatsdk.core.session.StorageManager;
-import co.chatsdk.core.utils.DisposableList;
+import co.chatsdk.core.utils.StringChecker;
 import co.chatsdk.core.utils.Strings;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.chat.ChatActivity;
 import co.chatsdk.ui.contacts.ContactsFragment;
-import co.chatsdk.ui.helpers.ProfilePictureChooserOnClickListener;
-import co.chatsdk.ui.main.BaseActivity;
+import co.chatsdk.ui.utils.ImagePreviewActivity;
+import co.chatsdk.ui.utils.ToastHelper;
 
 /**
  * Created by braunster on 24/11/14.
  */
-public class ThreadDetailsActivity extends BaseActivity {
+public class ThreadDetailsActivity extends ImagePreviewActivity {
 
     /** Set true if you want slide down animation for this context exit. */
     protected boolean animateExit = false;
 
     protected Thread thread;
     protected SimpleDraweeView threadImageView;
+    protected TextView threadNameTextView;
 
     protected ContactsFragment contactsFragment;
-    protected DisposableList disposableList = new DisposableList();
 
     protected ActionBar actionBar;
     protected MenuItem settingsItem;
@@ -67,67 +64,73 @@ public class ThreadDetailsActivity extends BaseActivity {
                 finish();
             }
         }
-
-        setContentView(activityLayout());
+        if (thread == null) {
+            ToastHelper.show(this, R.string.error_thread_not_found);
+            finish();
+        }
 
         initViews();
 
-        disposableList.add(ChatSDK.events().sourceOnMain()
-                .filter(NetworkEvent.threadUsersUpdated())
-                .subscribe(networkEvent -> loadData()));
+        // Depending on the thread type, disable / enable options
+        if (thread.typeIs(ThreadType.Private1to1)) {
+            threadNameTextView.setVisibility(View.INVISIBLE);
+        } else {
+            threadNameTextView.setVisibility(View.VISIBLE);
+        }
 
-        loadData();
     }
 
     protected @LayoutRes int activityLayout() {
-        return R.layout.chat_sdk_activity_thread_details;
+        return R.layout.activity_thread_details;
     }
 
     protected void initViews() {
-        actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setTitle(Strings.nameForThread(thread));
-            actionBar.setHomeButtonEnabled(true);
-        }
 
         threadImageView = findViewById(R.id.chat_sdk_thread_image_view);
-
-        updateMetaData();
+        threadNameTextView = findViewById(R.id.name_text_view);
 
         disposableList.add(ChatSDK.events().sourceOnMain()
-                .filter(NetworkEvent.filterType(EventType.ThreadMetaUpdated))
-                .subscribe(networkEvent -> updateMetaData()));
+                .filter(NetworkEvent.threadDetailsUpdated())
+                .filter(NetworkEvent.filterThreadEntityID(thread.getEntityID()))
+                .subscribe(networkEvent -> reloadData()));
+
+        reloadData();
     }
 
-    protected void updateMetaData() {
-        // TODO: permanently move thread name into meta data
-        ThreadMetaValue nameMetaValue = thread.metaValueForKey(Keys.Name);
-        if (nameMetaValue != null)
-            actionBar.setTitle(nameMetaValue.getValue());
-    }
+    protected void reloadData () {
+        actionBar = getSupportActionBar();
+        String name = Strings.nameForThread(thread);
+        if (actionBar != null) {
+            actionBar.setTitle(name);
+            actionBar.setHomeButtonEnabled(true);
+        }
+        threadNameTextView.setText(name);
 
-    protected void loadData () {
-        ThreadImageBuilder.load(threadImageView, thread);
+        if (!StringChecker.isNullOrEmpty(thread.getImageUrl())) {
+            threadImageView.setOnClickListener(v -> zoomImageFromThumbnail(threadImageView, thread.getImageUrl()));
+            threadImageView.setImageURI(thread.getImageUrl());
+        } else {
+            ThreadImageBuilder.load(threadImageView, thread);
+            threadImageView.setOnClickListener(null);
+        }
 
         // CoreThread users bundle
-        contactsFragment = new ContactsFragment();
-        contactsFragment.setInflateMenu(false);
-        contactsFragment.setLoadingMode(ContactsFragment.MODE_LOAD_THREAD_USERS);
-        contactsFragment.setExtraData(thread.getEntityID());
-        contactsFragment.setClickMode(ContactsFragment.CLICK_MODE_SHOW_PROFILE);
-
-        getSupportFragmentManager().beginTransaction().replace(R.id.frame_thread_users, contactsFragment).commit();
+        if (contactsFragment == null) {
+            contactsFragment = new ContactsFragment();
+            contactsFragment.setInflateMenu(false);
+            contactsFragment.setLoadingMode(ContactsFragment.MODE_LOAD_THREAD_USERS);
+            contactsFragment.setExtraData(thread.getEntityID());
+            contactsFragment.setClickMode(ContactsFragment.CLICK_MODE_SHOW_PROFILE);
+            getSupportFragmentManager().beginTransaction().replace(R.id.frame_thread_users, contactsFragment).commit();
+        } else {
+            contactsFragment.loadData(false);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Only if the current user is the admin of this thread.
-        if (StringUtils.isNotBlank(thread.getCreatorEntityId()) && thread.getCreatorEntityId().equals(ChatSDK.currentUserID())) {
-            //threadImageView.setOnClickListener(ChatSDKIntentClickListener.getPickImageClickListener(this, THREAD_PIC));
-            threadImageView.setOnClickListener(new ProfilePictureChooserOnClickListener(this));
-        }
+        reloadData();
     }
 
     @Override
@@ -137,7 +140,7 @@ public class ThreadDetailsActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        setResult(AppCompatActivity.RESULT_OK);
+        setResult(Activity.RESULT_OK);
 
         finish(); // Finish needs to be called before animate exit
         if (animateExit) {
@@ -153,12 +156,6 @@ public class ThreadDetailsActivity extends BaseActivity {
     }
 
     @Override
-    protected void onStop() {
-        disposableList.dispose();
-        super.onStop();
-    }
-
-    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         getDataFromBundle(intent.getExtras());
@@ -169,12 +166,12 @@ public class ThreadDetailsActivity extends BaseActivity {
             return;
         }
 
-        animateExit = bundle.getBoolean(ChatActivity.ANIMATE_EXIT, animateExit);
+        animateExit = bundle.getBoolean(Keys.IntentKeyAnimateExit, animateExit);
 
-        String threadEntityID = bundle.getString(InterfaceManager.THREAD_ENTITY_ID);
+        String threadEntityID = bundle.getString(Keys.IntentKeyThreadEntityID);
 
         if (threadEntityID != null && !threadEntityID.isEmpty()) {
-            thread = StorageManager.shared().fetchThreadWithEntityID(threadEntityID);
+            thread = ChatSDK.db().fetchThreadWithEntityID(threadEntityID);
         }
         else {
             finish();
@@ -184,16 +181,20 @@ public class ThreadDetailsActivity extends BaseActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(InterfaceManager.THREAD_ENTITY_ID, thread.getEntityID());
-        outState.putBoolean(ChatActivity.ANIMATE_EXIT, animateExit);
+        outState.putString(Keys.IntentKeyThreadEntityID, thread.getEntityID());
+        outState.putBoolean(Keys.IntentKeyAnimateExit, animateExit);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        settingsItem = menu.add(Menu.NONE, R.id.action_chat_sdk_settings, 12, getString(R.string.action_settings));
-        settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        settingsItem.setIcon(R.drawable.icn_24_settings);
-        return super.onCreateOptionsMenu(menu);
+        // Only the creator can modify the group. Also, private 1-to-1 chats can't be edited
+        if (thread.getCreatorEntityId().equals(ChatSDK.currentUserID()) && !thread.typeIs(ThreadType.Private1to1)) {
+            settingsItem = menu.add(Menu.NONE, R.id.action_chat_sdk_settings, 12, getString(R.string.action_settings));
+            settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            settingsItem.setIcon(R.drawable.icn_24_settings);
+            return super.onCreateOptionsMenu(menu);
+        }
+        return false;
     }
 
     @Override
@@ -202,7 +203,7 @@ public class ThreadDetailsActivity extends BaseActivity {
             onBackPressed();
         }
         if (item.getItemId() == R.id.action_chat_sdk_settings) {
-            InterfaceManager.shared().a.startPublicThreadEditDetailsActivity(ChatSDK.shared().context(), thread.getEntityID());
+            ChatSDK.ui().startThreadEditDetailsActivity(ChatSDK.shared().context(), thread.getEntityID());
         }
         return true;
     }

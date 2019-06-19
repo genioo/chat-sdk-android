@@ -29,12 +29,9 @@
     <string name="send_location">Deze plaatsbepaling doorsturen</string>
     <string name="search_upper_case">Zoeken</string>
     <string name="send">Versturen</string>
-    <string name="pick_friends">Gebruikers kiezen</string>
     <string name="tap_here_for_contact_info">Tik voor meer contactinformatie</string>
     <string name="search_with_name">Zoeken volgens naam</string>
     <string name="add_conversation">Gesprek toevoegen</string>
-    <string name="thread__created" formatted="false">Gesprek %s aangemaakt</string>
-    <string name="public_thread__created" formatted="false">Publiek gesprek %s aangemaakt</string>
     <string name="creating_thread">Bezig met het aanmaken van het gesprek</string>
     <string name="send_mail">Verstuur bericht</string>
     <string name="there_are_no_email_clients_installed">Geen e-mailcliënten te vinden</string>
@@ -110,7 +107,6 @@
     <string name="search_activity_no_text_input_toast">Tekst invoeren om te zoeken</string>
     <string name="search_activity_no_user_found_toast">Meh. Niks gevonden</string>
     <string name="search_activity_no_contact_selected_toast">Niemand geselecteerd</string>
-    <string name="search_activity_user_added_as_contact_after_count_toast"> Gebruikers toegevoegd aan je contacten</string>
     <string name="search_activity_prog_dialog_init_message">Bezig met thread&#8230; te zoeken</string>
     <string name="search_activity_prog_dialog_before_count_message">thread&#8230; aan het zoeken. Gevonden: thread&#160;</string>
     <string name="search_activity_searching_message">Bezig met zoeken</string>
@@ -169,7 +165,7 @@
     <string name="couldnt_load_sticker_pack">Emoji’s inladen mislukt</string>
     <string name="unable_to_load_image">Afbeelding tonen mislukt</string>
     <string name="__permission_not_granted" formatted="true">Geen toestemming om dit te doen</string>
-    <string name="error_permission_not_granted">Toestemming niet verleend: %d</string>
+    <string name="error_permission_not_granted">Toestemming niet verleend: %s</string>
     <!--State-->
     <string name="sending">Aan het versturen</string>
     <string name="not_messages_summary">%d ongelezen berichten</string>
@@ -283,6 +279,8 @@
     <string name="permission_location_title">Toegang tot je locatie verlenen</string>
     <string name="permission_location_message">Toelaten dat gebruikers je kunnen zien</string>
     <string name="permission_location_not_granted">Locatie machtigingen niet verleend</string>
+    <string name="location_services_not_enabled">Locatieservices niet ingeschakeld</string>
+    <string name="location_services_problem_message">Er was een probleem met de locatieservices. Zorg ervoor dat je ze hebt ingeschakeld in je telefooninstellingen.</string>s
     <string name="location_is_null">Locatie is null</string>
     <string name="search_threads">doorzoek discussies</string>
 

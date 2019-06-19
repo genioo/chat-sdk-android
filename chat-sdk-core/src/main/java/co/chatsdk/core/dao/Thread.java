@@ -19,7 +19,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import co.chatsdk.core.base.AbstractEntity;
 import co.chatsdk.core.interfaces.CoreEntity;
+import co.chatsdk.core.session.ChatSDK;
 import co.chatsdk.core.session.StorageManager;
 import co.chatsdk.core.utils.StringChecker;
 
@@ -27,7 +29,7 @@ import co.chatsdk.core.utils.StringChecker;
 // KEEP INCLUDES - put your custom includes here
 
 @org.greenrobot.greendao.annotation.Entity
-public class Thread implements CoreEntity {
+public class Thread extends AbstractEntity {
 
     @org.greenrobot.greendao.annotation.Id
     private Long id;
@@ -43,11 +45,7 @@ public class Thread implements CoreEntity {
     private String rootKey;
     private String apiKey; // TODO: Delete this
     private Long creatorId;
-    private Long lastMessageId;
-
-    @ToOne(joinProperty = "lastMessageId")
-    private Message lastMessage;
-
+    
     @ToOne(joinProperty = "creatorId")
     private User creator;
 
@@ -73,9 +71,6 @@ public class Thread implements CoreEntity {
     private transient ThreadDao myDao;
     @Generated(hash = 1767171241)
     private transient Long creator__resolvedKey;
-    @Generated(hash = 88977546)
-    private transient Long lastMessage__resolvedKey;
-
     public Thread() {
     }
 
@@ -83,9 +78,9 @@ public class Thread implements CoreEntity {
         this.id = id;
     }
 
-    @Generated(hash = 859547806)
+    @Generated(hash = 713986075)
     public Thread(Long id, String entityID, Date creationDate, Boolean hasUnreadMessages, Boolean deleted, String name, Integer type,
-            String creatorEntityId, String imageUrl, String rootKey, String apiKey, Long creatorId, Long lastMessageId) {
+            String creatorEntityId, String imageUrl, String rootKey, String apiKey, Long creatorId) {
         this.id = id;
         this.entityID = entityID;
         this.creationDate = creationDate;
@@ -98,36 +93,35 @@ public class Thread implements CoreEntity {
         this.rootKey = rootKey;
         this.apiKey = apiKey;
         this.creatorId = creatorId;
-        this.lastMessageId = lastMessageId;
     }
 
     public void setMessages(List<Message> messages) {
         this.messages = messages;
     }
 
-    public List<User> getUsers(){
-        /* Getting the users list by getUserThreadLink can be out of date so we get the data from the database*/
+    public List<User> getUsers() {
 
         List<UserThreadLink> list =  DaoCore.fetchEntitiesWithProperty(UserThreadLink.class, UserThreadLinkDao.Properties.ThreadId, getId());
+//        List<UserThreadLink> list = getUserThreadLinks();
 
-        //if (DEBUG) Timber.d("Thread, getUsers, Amount: %s", (list == null ? "null" : list.size()));
-
-        List<User> users  = new ArrayList<User>();
+        List<User> users  = new ArrayList<>();
 
         if (list == null) {
             return users;
         }
 
-        for (UserThreadLink data : list)
-            if (data.getUser() != null && !users.contains(data.getUser()))
+        for (UserThreadLink data : list) {
+            if (data.getUser() != null && !users.contains(data.getUser())) {
                 users.add(data.getUser());
+            }
+        }
 
         return users;
     }
 
     public boolean containsUser (User user) {
         for(User u : getUsers()) {
-            if (u.getEntityID().equals(user.getEntityID())) {
+            if (u.equalsEntity(user)) {
                 return true;
             }
         }
@@ -152,14 +146,16 @@ public class Thread implements CoreEntity {
 
     public void addUser (User user) {
         DaoCore.connectUserAndThread(user, this);
-        this.update();
+        update();
         user.update();
+//        resetUserThreadLinks();
     }
 
     public void removeUser (User user) {
         DaoCore.breakUserAndThread(user, this);
-        this.update();
+        update();
         user.update();
+//        resetUserThreadLinks();
     }
 
     public User otherUser () {
@@ -189,11 +185,9 @@ public class Thread implements CoreEntity {
         }
     }
 
-
-
     public boolean containsMessageWithID (String messageEntityID) {
         for(Message m : getMessages()) {
-            if(m.getEntityID() != null && messageEntityID != null && m.getEntityID().equals(messageEntityID)) {
+            if(m.getEntityID() != null && messageEntityID != null && m.equalsEntityID(messageEntityID)) {
                 return true;
             }
         }
@@ -234,19 +228,17 @@ public class Thread implements CoreEntity {
     }
 
     public void addMessage (Message message) {
-        setLastMessage(message);
         message.setThreadId(this.getId());
-        message.update();
         getMessages().add(message);
         update();
-//        resetMessages();
+        refresh();
     }
 
     @Keep
     public void setMetaValue (String key, String value) {
         ThreadMetaValue metaValue = metaValueForKey(key);
         if (metaValue == null) {
-            metaValue = StorageManager.shared().createEntity(ThreadMetaValue.class);
+            metaValue = ChatSDK.db().createEntity(ThreadMetaValue.class);
             metaValue.setThreadId(this.getId());
             getMetaValues().add(metaValue);
         }
@@ -274,23 +266,12 @@ public class Thread implements CoreEntity {
 
         List<Message> messages = getMessages();
 
-        if (messages.contains(message)) {
-            messages.remove(message);
-        }
+        messages.remove(message);
 
         message.cascadeDelete();
 
         update();
         resetMessages();
-
-        if (messages.size() > 1) {
-            setLastMessage(messages.get(messages.size()-1));
-        }
-        else {
-            //
-            setLastMessageId(Long.valueOf(0));
-            update();
-        }
     }
 
     public boolean hasUser(User user) {
@@ -456,13 +437,12 @@ public class Thread implements CoreEntity {
     }
 
     public Message lastMessage () {
-        if(lastMessage == null) {
-            List<Message> messages = getMessagesWithOrder(DaoCore.ORDER_DESC);
-            if (messages.size() > 0) {
-                lastMessage = messages.get(0);
-            }
+        List<Message> messages = getMessagesWithOrder(DaoCore.ORDER_DESC, 1);
+        if (messages.size() > 0) {
+            return messages.get(0);
+        } else {
+            return null;
         }
-        return lastMessage;
     }
 
     public Long getCreatorId() {
@@ -605,39 +585,6 @@ public class Thread implements CoreEntity {
         this.imageUrl = imageUrl;
     }
 
-    public Long getLastMessageId() {
-        return this.lastMessageId;
-    }
-
-    /** To-one relationship, resolved on first access. */
-    @Generated(hash = 1697405005)
-    public Message getLastMessage() {
-        Long __key = this.lastMessageId;
-        if (lastMessage__resolvedKey == null || !lastMessage__resolvedKey.equals(__key)) {
-            final DaoSession daoSession = this.daoSession;
-            if (daoSession == null) {
-                throw new DaoException("Entity is detached from DAO context");
-            }
-            MessageDao targetDao = daoSession.getMessageDao();
-            Message lastMessageNew = targetDao.load(__key);
-            synchronized (this) {
-                lastMessage = lastMessageNew;
-                lastMessage__resolvedKey = __key;
-            }
-        }
-        return lastMessage;
-    }
-
-    /** called by internal mechanisms, do not call yourself. */
-    @Generated(hash = 944284900)
-    public void setLastMessage(Message lastMessage) {
-        synchronized (this) {
-            this.lastMessage = lastMessage;
-            lastMessageId = lastMessage == null ? null : lastMessage.getId();
-            lastMessage__resolvedKey = lastMessageId;
-        }
-    }
-
     /**
      * To-many relationship, resolved on first access (and after reset).
      * Changes to to-many relations are not persisted, make changes to the target entity.
@@ -669,12 +616,5 @@ public class Thread implements CoreEntity {
     public void setCreatorId(Long creatorId) {
         this.creatorId = creatorId;
     }
-
-    public void setLastMessageId(Long lastMessageId) {
-        this.lastMessageId = lastMessageId;
-    }
-
- 
-
 
 }

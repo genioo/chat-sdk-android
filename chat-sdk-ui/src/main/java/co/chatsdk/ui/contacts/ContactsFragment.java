@@ -30,13 +30,10 @@ import co.chatsdk.core.dao.User;
 import co.chatsdk.core.events.EventType;
 import co.chatsdk.core.events.NetworkEvent;
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.session.StorageManager;
 import co.chatsdk.core.utils.CrashReportingCompletableObserver;
-import co.chatsdk.core.utils.DisposableList;
 import co.chatsdk.core.utils.UserListItemConverter;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.main.BaseFragment;
-import co.chatsdk.ui.search.SearchActivity;
 import co.chatsdk.ui.utils.ToastHelper;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -87,8 +84,6 @@ public class ContactsFragment extends BaseFragment {
     protected Disposable listOnClickListenerDisposable;
     protected Disposable listOnLongClickListenerDisposable;
 
-    protected DisposableList disposableList = new DisposableList();
-
     /** Users that will be used to fill the adapter, This could be set manually or it will be filled when loading users for
      * {@link #loadingMode}*/
     protected List<User> sourceUsers = new ArrayList<>();
@@ -126,22 +121,6 @@ public class ContactsFragment extends BaseFragment {
 
     /** When isDialog = true the dialog will always show the list of users given to him or pulled by the thread id.*/
     protected boolean isDialog = false;
-
-    public static ContactsFragment newInstance() {
-        ContactsFragment f = new ContactsFragment();
-        f.setLoadingMode(MODE_LOAD_CONTACTS);
-        Bundle b = new Bundle();
-        f.setArguments(b);
-        return f;
-    }
-
-    public static ContactsFragment newInstance(int loadingMode, int clickMode, Object extraData) {
-        ContactsFragment f = new ContactsFragment();
-        f.setLoadingMode(loadingMode);
-        f.setClickMode(clickMode);
-        f.setExtraData(extraData);
-        return f;
-    }
 
     /** Creates a new contact dialog.
      * @param threadID - The id of the thread that his users is the want you want to show.
@@ -198,7 +177,7 @@ public class ContactsFragment extends BaseFragment {
 
         disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(NetworkEvent.filterContactsChanged())
-                .subscribe(networkEvent -> loadData(false)));
+                .subscribe(networkEvent -> loadData(true)));
 
         disposableList.add(ChatSDK.events().sourceOnMain()
                 .filter(NetworkEvent.filterType(EventType.UserPresenceUpdated))
@@ -234,13 +213,13 @@ public class ContactsFragment extends BaseFragment {
     }
 
     protected @LayoutRes int activityLayout() {
-        return R.layout.chat_sdk_fragment_contacts;
+        return R.layout.fragment_contacts;
     }
 
     public void initViews() {
-        recyclerView = mainView.findViewById(R.id.chat_sdk_list_contacts);
+        recyclerView = mainView.findViewById(R.id.recycler_contacts);
 
-        progressBar = mainView.findViewById(R.id.chat_sdk_progressbar);
+        progressBar = mainView.findViewById(R.id.progress_bar);
 
         // Create the adapter only if null this is here so we wont
         // override the adapter given from the extended class with setAdapter.
@@ -259,7 +238,7 @@ public class ContactsFragment extends BaseFragment {
         if (!inflateMenu)
             return;
 
-        MenuItem item = menu.add(Menu.NONE, R.id.action_chat_sdk_add, 10, "Add Chat");
+        MenuItem item = menu.add(Menu.NONE, R.id.action_add, 10, getString(R.string.action_add_chat));
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         item.setIcon(R.drawable.ic_plus);
     }
@@ -271,8 +250,8 @@ public class ContactsFragment extends BaseFragment {
         int id = item.getItemId();
 
         // Each user that will be found in the search context will be automatically added as a contact.
-        if (id == R.id.action_chat_sdk_add) {
-            SearchActivity.startSearchActivity(getActivity());
+        if (id == R.id.action_add) {
+            ChatSDK.ui().startSearchActivity(getActivity());
             return true;
         }
 
@@ -281,14 +260,14 @@ public class ContactsFragment extends BaseFragment {
 
     public void loadData (final boolean force) {
         final ArrayList<User> originalUserList = new ArrayList<>(sourceUsers);
-
-        disposableList.add(reloadUsers().observeOn(AndroidSchedulers.mainThread()).subscribe(() -> {
-            if (!originalUserList.equals(sourceUsers) || force) {
-                adapter.setUsers(UserListItemConverter.toUserItemList(sourceUsers), true);
-                Timber.v("Update Contact List");
+        reloadData();
+        if (!originalUserList.equals(sourceUsers) || force) {
+            adapter.setUsers(UserListItemConverter.toUserItemList(sourceUsers), true);
+            for (User u : sourceUsers) {
+                System.out.println("Update contacts " + u.getName());
             }
-            setupListClickMode();
-        }, ChatSDK::logError));
+        }
+        setupListClickMode();
     }
 
     @Override
@@ -312,9 +291,9 @@ public class ContactsFragment extends BaseFragment {
                     case CLICK_MODE_ADD_USER_TO_THREAD:
                         Thread thread = null;
                         if (extraData instanceof Long) {
-                            thread = StorageManager.shared().fetchThreadWithID((Long) extraData);
+                            thread = ChatSDK.db().fetchThreadWithID((Long) extraData);
                         } else if (extraData instanceof String) {
-                            thread = StorageManager.shared().fetchThreadWithEntityID((String) extraData);
+                            thread = ChatSDK.db().fetchThreadWithEntityID((String) extraData);
                         }
 
                         if (thread != null) {
@@ -353,41 +332,6 @@ public class ContactsFragment extends BaseFragment {
         });
     }
 
-    protected Completable reloadUsers () {
-        return Completable.create(e -> {
-            if (loadingMode != MODE_USE_SOURCE) {
-
-                sourceUsers.clear();
-               // If this is not a dialog we will load the contacts of the user.
-                switch (loadingMode) {
-                    case MODE_LOAD_CONTACTS:
-                        sourceUsers.addAll(ChatSDK.contact().contacts());
-                        Timber.d("Contacts: %s", sourceUsers.size());
-                        break;
-
-                    case MODE_LOAD_THREAD_USERS:
-                        Thread thread = DaoCore.fetchEntityWithEntityID(Thread.class, extraData);
-                        if (thread != null) {
-                            // Remove the current user from the list.
-                            List<User> users = thread.getUsers();
-                            users.remove(ChatSDK.currentUser());
-                            sourceUsers.addAll(users);
-                        }
-                        break;
-
-                    case MODE_LOAD_CONTACT_THAT_NOT_IN_THREAD:
-                        List<User> users1 = ChatSDK.contact().contacts();
-                        thread = StorageManager.shared().fetchThreadWithID((Long) extraData);
-                        List<User> threadUser = thread.getUsers();
-                        users1.removeAll(threadUser);
-                        sourceUsers.addAll(users1);
-                        break;
-                }
-            }
-            e.onComplete();
-        }).subscribeOn(Schedulers.single());
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -397,7 +341,38 @@ public class ContactsFragment extends BaseFragment {
 
     @Override
     public void reloadData() {
-        reloadUsers().subscribe(new CrashReportingCompletableObserver());
+        if (loadingMode != MODE_USE_SOURCE) {
+
+            sourceUsers.clear();
+            // If this is not a dialog we will load the contacts of the user.
+            switch (loadingMode) {
+                case MODE_LOAD_CONTACTS:
+                    sourceUsers.addAll(ChatSDK.contact().contacts());
+                    Timber.d("Contacts: %s", sourceUsers.size());
+                    break;
+
+                case MODE_LOAD_THREAD_USERS:
+                    Thread thread = DaoCore.fetchEntityWithEntityID(Thread.class, extraData);
+                    if (thread != null) {
+                        // Remove the current user from the list.
+                        List<User> users = thread.getUsers();
+                        for (User u : users) {
+                            if (!u.isMe()) {
+                                sourceUsers.add(u);
+                            }
+                        }
+                    }
+                    break;
+
+                case MODE_LOAD_CONTACT_THAT_NOT_IN_THREAD:
+                    List<User> users1 = ChatSDK.contact().contacts();
+                    thread = ChatSDK.db().fetchThreadWithID((Long) extraData);
+                    List<User> threadUser = thread.getUsers();
+                    users1.removeAll(threadUser);
+                    sourceUsers.addAll(users1);
+                    break;
+            }
+        }
     }
 
     @Override
@@ -423,12 +398,6 @@ public class ContactsFragment extends BaseFragment {
 
     public Observable<User> onLongClickObservable () {
         return onLongClickSubject;
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        disposableList.dispose();
     }
 
 }

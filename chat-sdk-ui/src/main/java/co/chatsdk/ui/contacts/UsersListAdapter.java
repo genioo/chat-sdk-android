@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import co.chatsdk.core.dao.User;
 import co.chatsdk.core.interfaces.UserListItem;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.utils.AvailabilityHelper;
@@ -41,9 +40,10 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     protected SparseBooleanArray selectedUsersPositions = new SparseBooleanArray();
 
-    protected boolean isMultiSelect = false;
+    protected boolean multiSelectEnabled = false;
     protected final PublishSubject<Object> onClickSubject = PublishSubject.create();
     protected final PublishSubject<Object> onLongClickSubject = PublishSubject.create();
+    protected final PublishSubject<List<UserListItem>> onToggleSubject = PublishSubject.create();
 
     protected class HeaderViewHolder extends RecyclerView.ViewHolder {
 
@@ -51,7 +51,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         public HeaderViewHolder(View itemView) {
             super(itemView);
-            textView = itemView.findViewById(R.id.header_text);
+            textView = itemView.findViewById(R.id.text_header);
         }
     }
 
@@ -66,14 +66,24 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         public UserViewHolder(View view) {
             super(view);
 
-            nameTextView = view.findViewById(R.id.chat_sdk_txt);
-            statusTextView = view.findViewById(R.id.tvStatus);
-            availabilityImageView = view.findViewById(R.id.ivAvailability);
-            avatarImageView = view.findViewById(R.id.img_profile_picture);
+            nameTextView = view.findViewById(R.id.text_name);
+            statusTextView = view.findViewById(R.id.text_status);
+            availabilityImageView = view.findViewById(R.id.image_availability);
+            avatarImageView = view.findViewById(R.id.image_avatar);
             checkBox = view.findViewById(R.id.checkbox);
 
             // Clicks are handled at the list item level
             checkBox.setClickable(false);
+        }
+
+        public void setMultiSelectEnabled (boolean enabled) {
+            if (enabled) {
+                checkBox.setVisibility(View.VISIBLE);
+                availabilityImageView.setVisibility(View.INVISIBLE);
+            } else {
+                availabilityImageView.setVisibility(View.VISIBLE);
+                checkBox.setVisibility(View.INVISIBLE);
+            }
         }
     }
 
@@ -81,8 +91,8 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         this(null, false);
     }
 
-    public UsersListAdapter(boolean isMultiSelect) {
-        this(null, isMultiSelect);
+    public UsersListAdapter(boolean multiSelectEnabled) {
+        this(null, multiSelectEnabled);
     }
 
     public UsersListAdapter(List<UserListItem> users, boolean multiSelect) {
@@ -92,7 +102,7 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         setUsers(users);
 
-        this.isMultiSelect = multiSelect;
+        this.multiSelectEnabled = multiSelect;
     }
 
     @Override
@@ -115,11 +125,11 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         if (viewType == TYPE_HEADER) {
-            View row = inflater.inflate(R.layout.chat_sdk_row_header, null);
+            View row = inflater.inflate(R.layout.view_contact_row_header, null);
             return new HeaderViewHolder(row);
         }
         else if (viewType == TYPE_USER) {
-            View row = inflater.inflate(R.layout.chat_sdk_row_contact, null);
+            View row = inflater.inflate(R.layout.view_contact_row_body, null);
             return new UserViewHolder(row);
         }
         return null;
@@ -131,12 +141,6 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         int type = getItemViewType(position);
         final Object item = items.get(position);
 
-        holder.itemView.setOnClickListener(view -> onClickSubject.onNext(item));
-        holder.itemView.setOnLongClickListener(view -> {
-            onLongClickSubject.onNext(item);
-            return true;
-        });
-
         if (type == TYPE_HEADER) {
             HeaderViewHolder hh = (HeaderViewHolder) holder;
             String header = (String) item;
@@ -144,27 +148,31 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         if (type == TYPE_USER) {
-            UserViewHolder uh = (UserViewHolder) holder;
-            UserListItem user = (UserListItem) item;
+            UserViewHolder userViewHolder = (UserViewHolder) holder;
+            UserListItem userListItem = (UserListItem) item;
 
-            uh.nameTextView.setText(user.getName());
+            userViewHolder.nameTextView.setText(userListItem.getName());
 
-            uh.availabilityImageView.setImageResource(AvailabilityHelper.imageResourceIdForAvailability(user.getAvailability()));
-            uh.statusTextView.setText(user.getStatus());
+            userViewHolder.availabilityImageView.setImageResource(AvailabilityHelper.imageResourceIdForAvailability(userListItem.getAvailability()));
+            userViewHolder.statusTextView.setText(userListItem.getStatus());
 
-            Timber.v("User: " + user.getName() + " Availability: " + user.getAvailability());
+            Timber.v("User: " + userListItem.getName() + " Availability: " + userListItem.getAvailability());
 
-            uh.avatarImageView.setImageURI(user.getAvatarURL());
+            userViewHolder.avatarImageView.setImageURI(userListItem.getAvatarURL());
 
-            if (isMultiSelect && user instanceof User) {
-                uh.checkBox.setVisibility(View.VISIBLE);
-                uh.checkBox.setChecked(selectedUsersPositions.get(position));
-                uh.availabilityImageView.setVisibility(View.INVISIBLE);
+            userViewHolder.setMultiSelectEnabled(multiSelectEnabled);
+
+            if (multiSelectEnabled) {
+                userViewHolder.checkBox.setChecked(selectedUsersPositions.get(position));
             }
-            else {
-                uh.availabilityImageView.setVisibility(View.VISIBLE);
-            }
+
         }
+
+        holder.itemView.setOnClickListener(view -> onClickSubject.onNext(item));
+        holder.itemView.setOnLongClickListener(view -> {
+            onLongClickSubject.onNext(item);
+            return true;
+        });
 
     }
 
@@ -283,7 +291,9 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
      * notifyDataSetChanged will be called.
      * * */
     public boolean toggleSelection(int position) {
-        return setViewSelected(position, !selectedUsersPositions.get(position));
+        boolean selected = setViewSelected(position, !selectedUsersPositions.get(position));
+        onToggleSubject.onNext(getSelectedUsers());
+        return selected;
     }
 
     public boolean toggleSelection(Object object) {
@@ -350,13 +360,17 @@ public class UsersListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return onClickSubject;
     }
 
+    public Observable<List<UserListItem>> onToggleObserver () {
+        return onToggleSubject;
+    }
+
     public Observable<Object> onLongClickObservable () {
         return onLongClickSubject;
     }
 
-    @Deprecated
-    public Observable<Object> getItemClicks () {
-        return onClickObservable();
+    public void setMultiSelectEnabled (boolean enabled) {
+        multiSelectEnabled = enabled;
+        notifyDataSetChanged();
     }
 
 }

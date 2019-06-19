@@ -1,7 +1,7 @@
 # Chat SDK for Android
 ### Open Source Messaging framework for Android
 
-<img target="_blank" src="http://img.chatcatapp.com/chatsdk/template_1_new.png" />
+![Main Image](https://raw.githubusercontent.com/chat-sdk/chat-sdk-android/master/graphics/android-phone-images.png)
 
 Chat SDK is a fully featured open source instant messaging framework for Android. Chat SDK is fully featured, scalable and flexible and follows the following key principles:
 
@@ -10,9 +10,11 @@ Chat SDK is a fully featured open source instant messaging framework for Android
 - **Full control of the data.** You have full and exclusive access to the user's chat data
 - **Quick integration.** Chat SDK is fully featured out of the box
 <!--- Install the demo **[Firebase](https://i.diawi.com/2JGr4o)** app now by clicking the link on your Android phone! -->
-- **Demo Versions.** **[Firebase](https://i.diawi.com/FcqGaK)** or **[XMPP](https://i.diawi.com/hNAqfQ)** open this link on your Android phone to install
+- **Demo Versions.** **[XMPP](https://i.diawi.com/mE5GkM)** open this link on your Android phone to install
 - **Scalable.** Supports millons of daily users [[1](https://firebase.google.com/docs/database/usage/limits), [2](https://blog.process-one.net/ejabberd-massive-scalability-1node-2-million-concurrent-users/)]
 - **Backend agnostic.** Chat SDK can be customized to [support any backend](https://github.com/chat-sdk/chat-sdk-android#backend-agnostic-architecture) 
+
+[![](https://raw.githubusercontent.com/chat-sdk/chat-sdk-android/master/graphics/chat-sdk-play.png)](https://play.google.com/store/apps/details?id=co.chatsdk.android.app_modules&hl=en)
 
 ## Technical details
 
@@ -37,6 +39,15 @@ Chat SDK is a fully featured open source instant messaging framework for Android
 - Firebase UI
 - [iOS Version](https://github.com/chat-sdk/chat-sdk-ios)
 - [Web Version](https://github.com/chat-sdk/chat-sdk-web)
+
+## Quick Start
+
+- [Standard Documentation](https://github.com/chat-sdk/chat-sdk-android/#adding-the-chat-sdk-to-your-project) 
+- [Full step-by-step guide](https://github.com/thecmart/manuals/tree/master/Tutorials) (Good for beginners)
+- **New** Video Series: [Part 1](https://www.youtube.com/watch?v=AwhxFx8CXCg), [Part 2](https://www.youtube.com/watch?v=RA-wendcrZw), [Part 3](https://www.youtube.com/watch?v=TldTOCoWLko)
+- [UI Customization](https://github.com/chat-sdk/docs/blob/master/Android%20Customize%20UI.md)
+- [API Documentation](https://github.com/chat-sdk/docs)
+- [Code Examples](https://github.com/chat-sdk/chat-sdk-android/blob/master/app/src/main/java/co/chatsdk/android/app/ApiExamples.java)
 
 ## Performance and Scalability
 
@@ -105,7 +116,7 @@ We're very excited about the project and we're looking for other people to get i
 + Write a tutorial - **we pay $100** for quality tutorials
 
 If you're interested please review the [Contributing
-Document](https://github.com/chat-sdk/chat-sdk-ios/blob/master/CONTRIBUTING.md) for details of our development flow and the CLA then email me at [**team@chatsdk.co**](mailto:team@chatsdk.co).
+Document](https://github.com/chat-sdk/chat-sdk-ios/blob/master/CONTRIBUTING.md) for details of our development flow and the CLA then email me at [**team@sdk.chat**](mailto:team@sdk.chat).
 
 ## Apps that use Chat SDK
 
@@ -115,6 +126,33 @@ Document](https://github.com/chat-sdk/chat-sdk-ios/blob/master/CONTRIBUTING.md) 
 + [Nex Tv Latino](https://play.google.com/store/apps/details?id=com.helpdevs.nexttv)
 
 If you have an app that uses the Chat SDK let us know and we'll add a link. 
+
+## Updating from 4.7.x to 4.8.x
+
+The latest update brings a range of improvements and new features including:
+
+- Detailed profile screen:
+	- User status
+	- User availability
+	- Country
+- Update to message view
+	- Efficiency improvements
+- Screens updated to use Material Design
+
+There are also a range of bug fixes and overall improvments. If we aren't able to document all the changes but if you have any issues updating your project, you can post on this [issue](https://github.com/chat-sdk/chat-sdk-android/issues/533) and we will answer your questions. 
+
+The [security rules](firebase-rules.json) have also been updated so make sure to bring your project up to date. 		
+
+Several schema have also been deprecated and will be removed at some point in the future. These include:
+
+- `message/to` field added
+- `message/meta` will replace `json_v2`
+- `message/from` will replace `user-firebase-id`
+- `thread/meta` will replace `details`
+- `thread/meta/creator` will replace `creator-entity-id`
+- `thread/meta/type` will replace `type_v4`
+
+At the moment these fields are not being used and are only included for future compatibility. However, in a future version of the client, the old fields will be removed and any old versions of the client will stop working.
 
 ## Running the demo project
 
@@ -149,10 +187,10 @@ repositories {
 Then add this to your `dependencies` area:
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-core:4.6.0'
-compile 'co.chatsdk.chatsdk:chat-sdk-ui:4.6.0'
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-adapter:4.6.0'
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-file-storage:4.6.0'
+compile 'co.chatsdk.chatsdk:chat-sdk-core:4.8.2'
+compile 'co.chatsdk.chatsdk:chat-sdk-ui:4.8.2'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-adapter:4.8.2'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-file-storage:4.8.2'
 ```
 
 You may also need to enable Java 8:
@@ -232,7 +270,7 @@ Activate the core Chat SDK modules and any other modules you need. See the modul
 Launch the Chat SDK login activity by adding this to your `AndroidManifest.xml`:
 
 ```
-<activity android:name="co.chatsdk.ui.login.LoginActivity">
+<activity android:name="co.chatsdk.ui.login.SplashScreenActivity">
     <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
@@ -243,7 +281,7 @@ Launch the Chat SDK login activity by adding this to your `AndroidManifest.xml`:
 Or if you want to launch the activity manually, you can do it using:
 
 ```
-InterfaceManager.shared().a.startLoginActivity(context, true);
+ChatSDK.ui().startSplashScreenActivity(context);
 ``` 
 
 ## Firebase Setup
@@ -291,6 +329,25 @@ We've written a [comprehensive Development Guide](https://github.com/chat-sdk/do
 If you thing that something is missing, you can post a new issue and we will update the guide. 
 
 We have a number of additional guides available on our [Wiki](https://github.com/chat-sdk/chat-sdk-android/wiki).
+
+Also checkout the other guides:
+
+1. [Build a custom push notification handler](https://github.com/chat-sdk/docs/blob/master/Custom%20Push%20Handler.md)
+
+
+## UI Customization
+
+The Chat SDK is designed to be easily customizable. If you want to customize any of the activities you can do it using the `ui` api. 
+
+```
+// You could define a custom LoginActivity subclass here
+ChatSDK.ui().setLoginActivity(YourLoginActivity.class);
+        
+// Or customise the profile fragment
+ChatSDK.ui().setProfileFragmentProvider(user -> YourProfileFragment.newInstance(user));
+```
+
+Every activity and fragment can be customized this way. 
 
 ## Configuration
 
@@ -348,7 +405,7 @@ Add the following to your `build.gradle`
 *Gradle*
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-push:4.6.0'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-push:4.8.2'
 ```
 
 [*Manual Import*](https://github.com/chat-sdk/chat-sdk-android#adding-modules-manually)
@@ -391,7 +448,7 @@ Now the script is active and push notifications will be set out automatically.
 Add the following to your `build.gradle`
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-ui:4.6.0'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-ui:4.8.2'
 ```
 
 ##### Enable the module
@@ -401,25 +458,6 @@ Add the following to the end of your `onCreate` method:
 ```
 FirebaseUIModule.activate(context, GoogleAuthProvider.PROVIDER_ID, PhoneAuthProvider.PROVIDER_ID);
 ```
-
-Add this to your `AndroidManifest.xml`
-
-```
-<activity android:name="co.chatsdk.firebase.ui.FirebaseUIActivity">
-    <intent-filter>
-        <action android:name="android.intent.action.MAIN" />
-        <category android:name="android.intent.category.LAUNCHER" />
-    </intent-filter>
-</activity>
-```
-
-To specify your own splash screen, you need to make a subclass of the `SplashScrenActivity`. Then call:
-
-```
-FirebaseUIModule.shared().setSplashScreen([your subclass]);
-```
-
-Also make sure to update the Android Manifest with this class too. 
 
 You can provide a list of providers as outlined in the [Firebase documentation](https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#sign-in-examples). 
 
@@ -435,7 +473,7 @@ Add the following to your `build.gradle`
 *Gradle*
 
 ```
-compile 'co.chatsdk.chatsdk:chat-sdk-firebase-social-login:4.6.0'
+compile 'co.chatsdk.chatsdk:chat-sdk-firebase-social-login:4.8.2'
 ```
 
 [*Manual Import*](https://github.com/chat-sdk/chat-sdk-android#adding-modules-manually)
@@ -552,7 +590,7 @@ After you have purchased the module you will be provided with a link to the modu
 
 Firebase secures your data by allowing you to write rules to govern who can access the database and what can be written. On the Firebase dashboard click **Database** then the **Rules** tab. 
 
-Copy the contents of the [**rules.json**](https://github.com/chat-sdk/chat-sdk-ios/blob/master/rules.json) file into the rules and click publish.
+Copy the contents of the [**rules.json**](https://github.com/chat-sdk/chat-sdk-android/blob/master/firebase-rules.json) file into the rules and click publish.
 
 ### Adding Modules Manually
 
@@ -601,36 +639,44 @@ ext {
     bintrayVersion = "1.8.4"
     mavenGradleVersion = "2.1"
     androidxAppcompatVersion = "1.0.2"
-    androidxConstraintLayoutVersion = "2.0.0-alpha2"
+    androidxConstraintLayoutVersion = "2.0.0-alpha5"
     androidxLifecycleExtensionsVersion = "2.0.0"
     androidxRecyclerViewVersion = "1.0.0"
+    androidxMultidexVersion = "2.0.1"
     materialVersion = "1.0.0"
     playAuthVersion = "16.0.1"
-    playMapsVersion = "16.0.0"
-    playPlacesVersion = "16.0.0"
-    firebaseUiVersion = "4.2.1"
-    firebaseCoreVersion = "16.0.5"
-    firebaseDatabaseVersion = "16.0.5"
-    firebaseAuthVersion = "16.0.5"
-    firebaseStorageVersion = "16.0.5"
-    firebaseMessagingVersion = "17.3.4"
-    firebaseFunctionsVersion = "16.1.3"
+    playMapsVersion = "16.1.0"
+    googlePlacesVersion = "1.1.0"
+    playLocationVersion = "16.0.0"
+    firebaseUiVersion = "4.3.2"
+    firebaseCoreVersion = "16.0.9"
+    firebaseDatabaseVersion = "17.0.0"
+    firebaseAuthVersion = "17.0.0"
+    firebaseStorageVersion = "17.0.0"
+    firebaseMessagingVersion = "18.0.0"
+    firebaseFunctionsVersion = "17.0.0"
+    firebaseIIDVersion = "18.0.0"
     timberVersion = "4.7.1"
     greenDaoVersion = "3.2.2"
-    frescoVersion = "1.10.0"
-    rxJavaVersion = "2.2.3"
-    rxAndroidVersion = "2.1.0"
+    frescoVersion = "1.13.0"
+    rxJavaVersion = "2.2.8"
+    rxAndroidVersion = "2.1.1"
     gsonVersion = "2.8.5"
     jodaTimeVersion = "2.10.1"
-    apacheCommonsVersion = "3.7"
+    jodaConvertVersion = "2.2.0"
+    apacheCommonsVersion = "3.8.1"
     compressorVersion = "2.1.0"
     okHttpVersion = "3.11.0"
-    facebookLoginVersion = "4.34.0"
+    facebookLoginVersion = "4.38.1"
     twitterVersion = "3.3.0"
     prettyTimeVersion = "4.0.1.Final"
     countryPickerVersion = "2.0.0"
     imageCropperVersion = "2.8.0"
-    photoViewVersion = "2.2.0"
+    photoViewVersion = "2.3.0"
+    materialDrawerVersion = "6.1.2"
+    androidDatabaseSQLCipher = "4.1.3@aar"
+    matisseVersion = "0.5.2-beta4"
+    speedDial = "2.0.1"
 }
 ```
 
@@ -664,7 +710,7 @@ The user interface for the Chat SDK is completely decoupled from the backend. Th
 
 2. You can switch the backend your app uses. Imagine that you decide to start off with the Firebase version of the Chat SDK but at some point you decide that you want to switch to using an XMPP server. Usually, this would require a full rewrite of the messaging client but with the Chat SDK it can be achieved by changing one line of code! 
 
-If you want more details about writing a custom network adapter you can email us at [team@chatsdk.co](mailto:team@chatsdk.co).
+If you want more details about writing a custom network adapter you can email us at [team@sdk.chat](mailto:team@sdk.chat).
   
 ## The license
 

@@ -1,11 +1,10 @@
 package co.chatsdk.ui.manager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.util.SparseArray;
 
 import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.facebook.cache.disk.DiskCacheConfig;
 import com.facebook.common.util.ByteConstants;
@@ -23,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 import co.chatsdk.core.Tab;
+import co.chatsdk.core.dao.Keys;
+import co.chatsdk.core.dao.Message;
 import co.chatsdk.core.dao.Thread;
 import co.chatsdk.core.dao.User;
 import co.chatsdk.core.interfaces.ChatOption;
@@ -32,9 +33,9 @@ import co.chatsdk.core.interfaces.MessageDisplayHandler;
 import co.chatsdk.core.interfaces.InterfaceAdapter;
 import co.chatsdk.core.interfaces.LocalNotificationHandler;
 import co.chatsdk.core.session.ChatSDK;
-import co.chatsdk.core.session.InterfaceManager;
 import co.chatsdk.core.types.MessageType;
 import co.chatsdk.core.types.SearchActivityType;
+import co.chatsdk.core.ui.ProfileFragmentProvider;
 import co.chatsdk.core.utils.NotificationDisplayHandler;
 import co.chatsdk.ui.R;
 import co.chatsdk.ui.chat.ChatActivity;
@@ -44,12 +45,14 @@ import co.chatsdk.ui.chat.handlers.TextMessageDisplayHandler;
 import co.chatsdk.ui.chat.options.DialogChatOptionsHandler;
 import co.chatsdk.ui.chat.options.LocationChatOption;
 import co.chatsdk.ui.chat.options.MediaChatOption;
+import co.chatsdk.ui.chat.options.MediaType;
+import co.chatsdk.ui.threads.AddUsersToThreadActivity;
 import co.chatsdk.ui.contacts.ContactsFragment;
-import co.chatsdk.ui.contacts.SelectContactActivity;
+import co.chatsdk.ui.threads.CreateThreadActivity;
+import co.chatsdk.ui.contacts.ForwardMessageActivity;
 import co.chatsdk.ui.login.LoginActivity;
-import co.chatsdk.ui.main.MainActivity;
+import co.chatsdk.ui.login.SplashScreenActivity;
 import co.chatsdk.ui.main.MainAppBarActivity;
-import co.chatsdk.ui.main.MainDrawActivity;
 import co.chatsdk.ui.profile.EditProfileActivity;
 import co.chatsdk.ui.profile.ProfileActivity;
 import co.chatsdk.ui.profile.ProfileFragment;
@@ -69,7 +72,28 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     public LocalNotificationHandler localNotificationHandler;
     public NotificationDisplayHandler notificationDisplayHandler;
 
-    private SparseArray<Tab> additionalTabs = new SparseArray<>();
+    protected Class loginActivity = LoginActivity.class;
+    protected Class splashScreenActivity = SplashScreenActivity.class;
+    protected Class mainActivity = MainAppBarActivity.class;
+    protected Class chatActivity = ChatActivity.class;
+    protected Class threadDetailsActivity = ThreadDetailsActivity.class;
+    protected Class threadEditDetailsActivity = ThreadEditDetailsActivity.class;
+
+    protected Class searchActivity = SearchActivity.class;
+    protected Class editProfileActivity = EditProfileActivity.class;
+    protected Class profileActivity = ProfileActivity.class;
+    protected Class createThreadActivity = CreateThreadActivity.class;
+    protected Class addUsersToThreadActivity = AddUsersToThreadActivity.class;
+    protected Class forwardMessageActivity = ForwardMessageActivity.class;
+
+    protected Intent loginIntent;
+
+    protected Fragment privateThreadsFragment = new PrivateThreadsFragment();
+    protected Fragment publicThreadsFragment = new PublicThreadsFragment();
+    protected Fragment contactsFragment = new ContactsFragment();
+    protected ProfileFragmentProvider profileFragmentProvider = user -> ProfileFragment.newInstance(user);
+
+    private ArrayList<Tab> tabs = new ArrayList<>();
     private Tab privateThreadsTab;
     private Tab publicThreadsTab;
     private Tab contactsTab;
@@ -111,6 +135,8 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         stringLocation = context.getResources().getString(R.string.location);
         stringTakePhoto = context.getResources().getString(R.string.take_photo);
         stringChoosePhoto = context.getResources().getString(R.string.choose_photo);
+
+        tabs.addAll(defaultTabs());
     }
 
     @Override
@@ -125,22 +151,17 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
 
     @Override
     public List<Tab> tabs() {
-        List<Tab> tabs = defaultTabs();
-        for (int i = 0; i < additionalTabs.size(); i++) {
-            int key = additionalTabs.keyAt(i);
-            tabs.add(key, additionalTabs.get(key));
-        }
         return tabs;
     }
 
     @Override
     public void addTab(Tab tab) {
-        additionalTabs.append(tabs().size(), tab);
+        tabs.add(tab);
     }
 
     @Override
     public void addTab(Tab tab, int index) {
-        additionalTabs.append(index, tab);
+        tabs.add(index, tab);
     }
 
     @Override
@@ -155,7 +176,7 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
 
     @Override
     public void removeTab(int index) {
-        additionalTabs.remove(index);
+        tabs.remove(index);
     }
 
     @Override
@@ -179,43 +200,83 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     }
 
     @Override
-    public AppCompatActivity profileActivity(User user) {
-        return null;
+    public Fragment privateThreadsFragment() {
+        return privateThreadsFragment;
     }
 
     @Override
-    public Fragment privateThreadsFragment() {
-        return new PrivateThreadsFragment();
+    public void setPrivateThreadsFragment (Fragment privateThreadsFragment) {
+        this.privateThreadsFragment = privateThreadsFragment;
     }
 
     @Override
     public Fragment publicThreadsFragment() {
-        return new PublicThreadsFragment();
+        return publicThreadsFragment;
+    }
+
+    @Override
+    public void setPublicThreadsFragment (Fragment publicThreadsFragment) {
+        this.publicThreadsFragment = publicThreadsFragment;
     }
 
     @Override
     public Fragment contactsFragment() {
-        return ContactsFragment.newInstance();
+        return contactsFragment;
+    }
+
+    @Override
+    public void setContactsFragment (Fragment contactsFragment) {
+        this.contactsFragment = contactsFragment;
     }
 
     @Override
     public Fragment profileFragment(User user) {
-        return ProfileFragment.newInstance(user);
+        return profileFragmentProvider.profileFragment(user);
+    }
+
+    @Override
+    public void setProfileFragmentProvider (ProfileFragmentProvider profileFragmentProvider) {
+        this.profileFragmentProvider = profileFragmentProvider;
     }
 
     @Override
     public Class getLoginActivity() {
-        return LoginActivity.class;
+        return loginActivity;
+    }
+
+    @Override
+    public void setLoginActivity (Class loginActivity) {
+        this.loginActivity = loginActivity;
+    }
+
+    @Override
+    public Class getSplashScreenActivity() {
+        return splashScreenActivity;
+    }
+
+    @Override
+    public void setSplashScreenActivity (Class splashScreenActivity) {
+        this.splashScreenActivity = splashScreenActivity;
     }
 
     @Override
     public Class getMainActivity() {
-        return MainAppBarActivity.class;
+        return mainActivity;
+    }
+
+    @Override
+    public void setMainActivity (Class mainActivity) {
+        this.mainActivity = mainActivity;
     }
 
     @Override
     public Class getChatActivity() {
-        return ChatActivity.class;
+        return chatActivity;
+    }
+
+    @Override
+    public void setChatActivity (Class chatActivity) {
+        this.chatActivity = chatActivity;
     }
 
     @Override
@@ -224,33 +285,89 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
     }
 
     @Override
-    public Class getThreadEditDetailsActivity() {
-        return ThreadEditDetailsActivity.class;
+    public void setThreadDetailsActivity (Class threadDetailsActivity) {
+        this.threadDetailsActivity = threadDetailsActivity;
     }
 
     @Override
-    public Class getSelectContactActivity() {
-        return SelectContactActivity.class;
+    public Class getThreadEditDetailsActivity() {
+        return threadEditDetailsActivity;
+    }
+
+    @Override
+    public void setThreadEditDetailsActivity (Class threadEditDetailsActivity) {
+        this.threadEditDetailsActivity = threadEditDetailsActivity;
+    }
+
+    @Override
+    public void setForwardMessageActivity(Class forwardMessageActivity) {
+        this.forwardMessageActivity = forwardMessageActivity;
+    }
+
+    @Override
+    public Class getAddUsersToThreadActivity() {
+        return addUsersToThreadActivity;
+    }
+
+    @Override
+    public Class getCreateThreadActivity() {
+        return createThreadActivity;
+    }
+
+    @Override
+    public Class getForwardMessageActivity() {
+        return forwardMessageActivity;
+    }
+
+    @Override
+    public void setAddUsersToThreadActivity(Class addUsersToThreadActivity) {
+        this.addUsersToThreadActivity = addUsersToThreadActivity;
+    }
+
+    @Override
+    public void setCreateThreadActivity(Class createThreadActivity) {
+        this.createThreadActivity = createThreadActivity;
     }
 
     @Override
     public Class getSearchActivity() {
-        return SearchActivity.class;
+        return searchActivity;
+    }
+
+
+    @Override
+    public void setSearchActivity (Class searchActivity) {
+        this.searchActivity = searchActivity;
     }
 
     @Override
     public Class getEditProfileActivity() {
-        return EditProfileActivity.class;
+        return editProfileActivity;
+    }
+
+    @Override
+    public void setEditProfileActivity (Class editProfileActivity) {
+        this.editProfileActivity = editProfileActivity;
     }
 
     @Override
     public Class getProfileActivity() {
-        return ProfileActivity.class;
+        return profileActivity;
     }
 
-    public void startActivity(Context context, Class activity, HashMap<String, Object> extras){
+    @Override
+    public void setProfileActivity (Class profileActivity) {
+        this.profileActivity = profileActivity;
+    }
+
+    public Intent intentForActivity(Context context, Class activity, HashMap<String, Object> extras) {
         Intent intent = new Intent(context, activity);
-        if (extras != null) {
+        addExtrasToIntent(intent, extras);
+        return intent;
+    }
+
+    public void addExtrasToIntent (Intent intent, HashMap<String, Object> extras) {
+        if (extras != null && intent != null) {
             for (String key : extras.keySet()) {
                 Object value = extras.get(key);
                 if (value instanceof String) {
@@ -267,7 +384,10 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
                 }
             }
         }
-        startActivity(context, intent);
+    }
+
+    public void startActivity(Context context, Class activity, HashMap<String, Object> extras){
+        startActivity(context, intentForActivity(context, activity, extras));
     }
 
     public void startActivity(Context context, Class activity){
@@ -279,27 +399,69 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         context.startActivity(intent);
     }
 
+    public void startActivityForResult (Activity activity, Intent intent, int code) {
+        activity.startActivityForResult(intent, code);
+    }
+
     public void startChatActivityForID(Context context, String threadEntityID) {
         Intent intent = new Intent(context, getChatActivity());
-        intent.putExtra(InterfaceManager.THREAD_ENTITY_ID, threadEntityID);
+        intent.putExtra(Keys.IntentKeyThreadEntityID, threadEntityID);
         startActivity(context, intent);
     }
 
-    public void startLoginActivity(Context context, boolean attemptCachedLogin){
-        Intent intent = new Intent(context, getLoginActivity());
-        intent.putExtra(InterfaceManager.ATTEMPT_CACHED_LOGIN, attemptCachedLogin);
-        startActivity(context, intent);
+    /**
+     * @deprecated use {@link #getLoginIntent(Context, HashMap)} ()}
+     */
+    @Deprecated
+//    public void startLoginActivity(Context context, boolean attemptCachedLogin){
+//        Intent intent = new Intent(context, getSplashScreenActivity());
+//        startActivity(context, intent);
+//    }
+//
+//    public void startLoginActivity (Context context, HashMap<String, Object> extras) {
+//        startActivity(context, getLoginActivity(), extras);
+//    }
+
+    @Override
+    public Intent getLoginIntent(Context context, HashMap<String, Object> extras) {
+        if (loginIntent != null) {
+            addExtrasToIntent(loginIntent, extras);
+            return loginIntent;
+        }
+        return intentForActivity(context, getLoginActivity(), extras);
+    }
+
+    @Override
+    public void setLoginIntent (Intent intent) {
+        loginIntent = intent;
+    }
+
+    public void startSplashScreenActivity (Context context) {
+        startActivity(context, getSplashScreenActivity());
     }
 
     public void startEditProfileActivity(Context context, String userEntityID){
         Intent intent = new Intent(context, getEditProfileActivity());
-        intent.putExtra(InterfaceManager.USER_ENTITY_ID, userEntityID);
+        intent.putExtra(Keys.IntentKeyUserEntityID, userEntityID);
         startActivity(context, intent);
     }
 
     public void startPublicThreadEditDetailsActivity(Context context, String threadEntityID){
+        startThreadEditDetailsActivity(context, threadEntityID);
+    }
+
+    public void startThreadEditDetailsActivity(Context context, String threadEntityID){
+        startThreadEditDetailsActivity(context, threadEntityID, null);
+    }
+
+    public void startThreadEditDetailsActivity(Context context, String threadEntityID, ArrayList<String> userEntityIDs){
         Intent intent = new Intent(context, getThreadEditDetailsActivity());
-        intent.putExtra(InterfaceManager.THREAD_ENTITY_ID, threadEntityID);
+        if (threadEntityID != null) {
+            intent.putExtra(Keys.IntentKeyThreadEntityID, threadEntityID);
+        }
+        if (userEntityIDs != null) {
+            intent.putStringArrayListExtra(Keys.IntentKeyUserEntityIDList, userEntityIDs);
+        }
         startActivity(context, intent);
     }
 
@@ -315,8 +477,21 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
         startActivity(context, getSearchActivity());
     }
 
-    public void startSelectContactsActivity(Context context) {
-        startActivity(context, getSelectContactActivity());
+    @Override
+    public void startForwardMessageActivityForResult(Activity activity, Message message, int code) {
+        Intent intent = new Intent(activity, getForwardMessageActivity());
+        intent.putExtra(Keys.IntentKeyMessageEntityID, message.getEntityID());
+        startActivityForResult(activity, intent, code);
+    }
+
+    @Override
+    public void startAddUsersToThreadActivity(Context context) {
+        startActivity(context, getAddUsersToThreadActivity());
+    }
+
+    @Override
+    public void startCreateThreadActivity(Context context) {
+        startActivity(context, getCreateThreadActivity());
     }
 
     @Override
@@ -364,8 +539,8 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
             }
 
             if(ChatSDK.config().imageMessagesEnabled) {
-                chatOptions.add(new MediaChatOption(stringTakePhoto, MediaChatOption.Type.TakePhoto));
-                chatOptions.add(new MediaChatOption(stringChoosePhoto, MediaChatOption.Type.ChoosePhoto));
+                chatOptions.add(new MediaChatOption(stringTakePhoto, MediaType.takePhoto()));
+                chatOptions.add(new MediaChatOption(stringChoosePhoto, MediaType.choosePhoto()));
             }
             defaultChatOptionsAdded = true;
         }
@@ -375,7 +550,7 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
 
     public void startProfileActivity(Context context, String userEntityID) {
         Intent intent = new Intent(context, getProfileActivity());
-        intent.putExtra(InterfaceManager.USER_ENTITY_ID, userEntityID);
+        intent.putExtra(Keys.IntentKeyUserEntityID, userEntityID);
         startActivity(context, intent);
     }
 
@@ -386,8 +561,12 @@ public class BaseInterfaceAdapter implements InterfaceAdapter {
 
     @Override
     public ChatOptionsHandler getChatOptionsHandler(ChatOptionsDelegate delegate) {
-        chatOptionsHandler = new DialogChatOptionsHandler(delegate);
-        chatOptionsHandler.setDelegate(delegate);
+        if (chatOptionsHandler == null) {
+//            chatOptionsHandler = new FloatingChatOptionsHandler(delegate);
+            chatOptionsHandler = new DialogChatOptionsHandler(delegate);
+        } else {
+            chatOptionsHandler.setDelegate(delegate);
+        }
         return chatOptionsHandler;
     }
 
