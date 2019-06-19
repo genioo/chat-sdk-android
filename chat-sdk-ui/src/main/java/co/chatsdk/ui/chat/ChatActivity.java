@@ -53,6 +53,7 @@ import co.chatsdk.core.session.ChatSDK;
 import co.chatsdk.core.types.MessageSendProgress;
 import co.chatsdk.core.types.MessageSendStatus;
 import co.chatsdk.core.utils.CrashReportingCompletableObserver;
+import co.chatsdk.core.utils.PermissionRequestHandler;
 import co.chatsdk.core.utils.StringChecker;
 import co.chatsdk.core.utils.Strings;
 import co.chatsdk.ui.R;
@@ -484,23 +485,6 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                 if (text.length() > 0) {
                     text = text.substring(0, text.length() - 2);
                 }
-            }
-        }
-        final String finalText = text;
-        new Handler(getMainLooper()).post(() -> subtitleTextView.setText(finalText));
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    protected void setSubtitleText(String text) {
-        if(StringChecker.isNullOrEmpty(text)) {
-            if(thread.typeIs(ThreadType.Private1to1)) {
-                text = getString(R.string.tap_here_for_contact_info);
-            } else {
-                text = thread.getDisplayName();
             }
         }
         final String finalText = text;
