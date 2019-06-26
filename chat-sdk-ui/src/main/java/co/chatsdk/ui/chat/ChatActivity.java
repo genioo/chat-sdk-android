@@ -232,27 +232,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
         final SwipeRefreshLayout mSwipeRefresh = findViewById(R.id.ptr_layout);
 
-        mSwipeRefresh.setOnRefreshListener(() -> {
-
-            List<MessageListItem> items = messageListAdapter.getMessageItems();
-            Message firstMessage = null;
-            if (items.size() > 0) {
-                firstMessage = items.get(0).message;
-            }
-
-            disposableList.add(ChatSDK.thread().loadMoreMessagesForThread(firstMessage, thread)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe((messages, throwable) -> {
-                        if (throwable == null) {
-                            for (Message m : messages) {
-                                messageListAdapter.addRow(m, false, false);
-                            }
-                            messageListAdapter.sortAndNotify();
-                            recyclerView.getLayoutManager().scrollToPosition(messages.size());
-                        }
-                        mSwipeRefresh.setRefreshing(false);
-                    }));
-        });
+        mSwipeRefresh.setOnRefreshListener(() -> loadMoreMessages(mSwipeRefresh));
 
         recyclerView = findViewById(R.id.list_chat);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -269,6 +249,27 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
         }
 
         recyclerView.setAdapter(messageListAdapter);
+    }
+
+    protected void loadMoreMessages(SwipeRefreshLayout mSwipeRefresh) {
+        List<MessageListItem> items = messageListAdapter.getMessageItems();
+        Message firstMessage = null;
+        if (items.size() > 0) {
+            firstMessage = items.get(0).message;
+        }
+
+        disposableList.add(ChatSDK.thread().loadMoreMessagesForThread(firstMessage, thread)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe((messages, throwable) -> {
+                    if (throwable == null) {
+                        for (Message m : messages) {
+                            messageListAdapter.addRow(m, false, false);
+                        }
+                        messageListAdapter.sortAndNotify();
+                        recyclerView.getLayoutManager().scrollToPosition(messages.size());
+                    }
+                    mSwipeRefresh.setRefreshing(false);
+                }));
     }
 
     @Override
