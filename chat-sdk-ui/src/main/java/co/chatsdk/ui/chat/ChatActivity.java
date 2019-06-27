@@ -388,12 +388,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSuccess(messages -> {
 
-                    int addedCount = 0;
-                    for(Message m : messages) {
-                        if(messageListAdapter.addRow(m, false, false, false)) {
-                            addedCount++;
-                        }
-                    }
+                    boolean messagesAdded = addMessages(messages);
                     if (notify) {
                         reloadDataInRange(0, messages.size());
                     }
@@ -401,7 +396,7 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
                     int firstVisible = layoutManager().findFirstVisibleItemPosition();
                     int lastVisible = layoutManager().findLastVisibleItemPosition();
 
-                    if (addedCount > 0 && saveScrollPosition) {
+                    if (messagesAdded && saveScrollPosition) {
                         scrollListTo(messages.size() + lastVisible - firstVisible, false);
                     }
 
@@ -410,6 +405,16 @@ public class ChatActivity extends BaseActivity implements TextInputDelegate, Cha
 
                     loadingMoreMessages = false;
                 }).ignoreElement());
+    }
+
+    protected boolean addMessages(List<Message> messages){
+        boolean added = false;
+        for(Message m : messages) {
+            if(messageListAdapter.addRow(m, false, false, false)) {
+                added = true;
+            }
+        }
+        return added;
     }
 
     @Override
