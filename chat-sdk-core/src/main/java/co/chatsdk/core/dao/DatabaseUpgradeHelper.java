@@ -154,7 +154,7 @@ public class DatabaseUpgradeHelper extends DaoMaster.OpenHelper {
 
         @Override
         public void runMigration(Database db) {
-            db.execSQL("ALTER TABLE " + ThreadDao.TABLENAME + " DROP COLUMN " + "LAST_MESSAGE_ID");
+            // db.execSQL("ALTER TABLE " + ThreadDao.TABLENAME + " DROP COLUMN " + "LAST_MESSAGE_ID");
         }
     }
 
